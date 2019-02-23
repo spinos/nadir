@@ -1,0 +1,23 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "Nadir",
+	"Description": "beginner's stuff",
+	"Category": "Hello",
+	"CreatedBy": "Zhang Jian",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": false,
+	"IsBetaVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "Nadir",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		}
+	]
+}
