@@ -26,7 +26,7 @@ void FNadirModule::Register()
 	//FMeshEditorStyle::Initialize();
 
 	FEditorModeRegistry::Get().RegisterMode<FNadirEdMode>(FNadirEdMode::EM_NadirEdModeId, 
-		LOCTEXT("NadirEdModeName", "NadirEdMode"), 
+		LOCTEXT("NadirEdModeName", "NadirEditMode"), 
 		FSlateIcon(), 
 		true);
 }

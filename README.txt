@@ -1,4 +1,5 @@
 Beginner's Unreal Engine 4 Editor Mode Plugin
 
-Reference
-https://github.com/coderespawn/haste-plugin-ue4
+Features:
+*Click Send button to put selected actor name in a text field
+
