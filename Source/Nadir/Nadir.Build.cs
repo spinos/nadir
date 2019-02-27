@@ -11,14 +11,15 @@ public class Nadir : ModuleRules
 		PublicIncludePaths.AddRange(
 			new string[] {
 				// ... add public include paths required here ...
-			}
+                "Runtime/LevelSequence/Public",
+            }
 			);
 				
 		
 		PrivateIncludePaths.AddRange(
 			new string[] {
 				// ... add other private include paths required here ...
-			}
+            }
 			);
 			
 		
@@ -41,6 +42,11 @@ public class Nadir : ModuleRules
 				"InputCore",
 				"UnrealEd",
 				"LevelEditor",
+                "LevelSequence",
+                "MovieScene",
+                "MovieSceneTools",
+                "MovieSceneTracks",
+                "Sequencer",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
