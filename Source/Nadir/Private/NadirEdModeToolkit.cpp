@@ -12,6 +12,7 @@
 #include "LevelSequenceActor.h"
 #include "ILevelSequenceModule.h"
 #include "AssetRegistryModule.h"
+#include "Runtime/MovieSceneTracks/Public/Tracks/MovieScene3DTransformTrack.h"
 
 DEFINE_LOG_CATEGORY(LogNadirToolkit);
 
@@ -94,6 +95,8 @@ struct Locals
 			return nullptr;
 		}
 
+		UE_LOG(LogNadirToolkit, Warning, TEXT("active level sequence name %s"), *levelSeq->GetFName().ToString() );
+
 		return levelSeq;
 	}
 
@@ -128,12 +131,21 @@ struct Locals
 		return fframe * fpsUp / tickUp;
 	}
 
+	static void PrintHierarchy(const UActorComponent *comp)
+	{
+
+	}
+
 	static void CheckPossessed(UMovieScene *movScn)
 	{
 		UE_LOG(LogNadirToolkit, Warning, TEXT("# possessables %i "), movScn->GetPossessableCount());
 		for (int i = 0; i < movScn->GetPossessableCount(); i++) {
 			FMovieScenePossessable & possi = movScn->GetPossessable(i);
 			UE_LOG(LogNadirToolkit, Warning, TEXT("possessable %s "), *possi.GetName() );
+
+			const FGuid & possId = possi.GetGuid();
+			UE_LOG(LogNadirToolkit, Warning, TEXT("parent id is %i %i %i %i"), possId.A, possId.B, possId.C, possId.D );
+
 		}
 
 		const TArray < FMovieSceneBinding > &movBinds = movScn->GetBindings();
@@ -141,14 +153,33 @@ struct Locals
 		for (int i = 0; i < movBinds.Num(); i++) {
 			UE_LOG(LogNadirToolkit, Warning, TEXT("bind %s "), *movBinds[i].GetName() );
 
-			const FGuid& guid = movBinds[i].GetObjectGuid();
+			const FGuid& objId = movBinds[i].GetObjectGuid();
+			UE_LOG(LogNadirToolkit, Warning, TEXT("id is %i %i %i %i"), objId.A, objId.B, objId.C, objId.D );
+
 			const TArray < UMovieSceneTrack * > & tracks = movBinds[i].GetTracks();
 
             UE_LOG(LogNadirToolkit, Warning, TEXT("# tracks %i "), tracks.Num() );
 
+            static const FName s_transformTrackName(TEXT("Transform"));
+
+			UMovieScene3DTransformTrack* transformTrack = movScn->FindTrack<UMovieScene3DTransformTrack>(movBinds[i].GetObjectGuid(), s_transformTrackName);
+			if(transformTrack) {
+				UE_LOG(LogNadirToolkit, Warning, TEXT("found transform track") );
+			}
+
 		}
 		
 	}
+
+/// https://answers.unrealengine.com/questions/813601/view.html
+/// Sequencer.cpp
+///for (auto AttachSection : AttachTrack->GetAllSections())
+///					FMovieSceneObjectBindingID ConstraintBindingID = (Cast<UMovieScene3DAttachSection>(AttachSection))->GetConstraintBindingID();
+///					for (auto ParentObject : FindBoundObjects(ConstraintBindingID.GetGuid(), ConstraintBindingID.GetSequenceID()) )
+///					{
+///						AttachParentActor = Cast<AActor>(ParentObject.Get());
+///						break;
+///					}
 
 	static FReply OnButtonSendClick()
 	{
@@ -198,7 +229,11 @@ struct Locals
 					UE_LOG(LogNadirToolkit, Warning, TEXT("%s is a camera "), *actorName );
 				}
 
-				UE_LOG(LogNadirToolkit, Warning, TEXT("actor label is %s "), *LevelActor->GetActorLabel() );
+/// find track
+				FGuid actorGuid = FUniqueObjectGuid::GetOrCreateIDForObject(*Iter).GetGuid();
+
+				UE_LOG(LogNadirToolkit, Warning, TEXT("id is %i %i %i %i"), actorGuid.A, actorGuid.B, actorGuid.C, actorGuid.D );
+
 			}
 		}
 		ActorNameField->SetText(FText::FromString(actorName));
