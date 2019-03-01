@@ -1,4 +1,13 @@
-// Copyright 1998-2018 Epic Games, Inc. All Rights Reserved.
+/// NadirEdModeToolkit.cpp
+///
+/// https://answers.unrealengine.com/questions/813601/view.html
+/// Sequencer.cpp
+/// for (auto AttachSection : AttachTrack->GetAllSections())
+///					FMovieSceneObjectBindingID ConstraintBindingID = (Cast<UMovieScene3DAttachSection>(AttachSection))->GetConstraintBindingID();
+///					for (auto ParentObject : FindBoundObjects(ConstraintBindingID.GetGuid(), ConstraintBindingID.GetSequenceID()) )
+///					{
+///						AttachParentActor = Cast<AActor>(ParentObject.Get());
+///					}
 
 #include "NadirEdModeToolkit.h"
 #include "NadirEdMode.h"
@@ -14,7 +23,7 @@
 #include "AssetRegistryModule.h"
 #include "Runtime/MovieSceneTracks/Public/Tracks/MovieScene3DTransformTrack.h"
 
-DEFINE_LOG_CATEGORY(LogNadirToolkit);
+DEFINE_LOG_CATEGORY(LogNadir);
 
 #define LOCTEXT_NAMESPACE "FNadirEdModeToolkit"
 
@@ -47,14 +56,14 @@ struct Locals
 				LevelActor->TeleportTo(LevelActor->GetActorLocation() + InOffset, FRotator(0, 0, 0));
 
 				FString actorName = LevelActor->GetName();
-				UE_LOG(LogNadirToolkit, Warning, TEXT("Actor's Name is %s"), *actorName);
+				UE_LOG(LogNadir, Warning, TEXT("Actor's Name is %s"), *actorName);
 			}
 		}
 
 		// We're done moving actors so close transaction
 		GEditor->EndTransaction();
 
-		UE_LOG(LogNadirToolkit, Verbose, TEXT("Button is clicked"));
+		UE_LOG(LogNadir, Verbose, TEXT("Button is clicked"));
 
 		return FReply::Handled();
 	}
@@ -84,18 +93,18 @@ struct Locals
 	{
 		TArray < UObject * > currentAssets = FAssetEditorManager::Get().GetAllEditedAssets();
 		if(currentAssets.Num() < 1) {
-			UE_LOG(LogNadirToolkit, Warning, TEXT("no active asset"));
+			UE_LOG(LogNadir, Warning, TEXT("no active asset"));
 			return nullptr;
 		}
 
 		ULevelSequence* levelSeq = Cast<ULevelSequence>(currentAssets[0]);
 		if(!levelSeq)
 		{
-			UE_LOG(LogNadirToolkit, Warning, TEXT("no active level sequence"));
+			UE_LOG(LogNadir, Warning, TEXT("no active level sequence"));
 			return nullptr;
 		}
 
-		UE_LOG(LogNadirToolkit, Warning, TEXT("active level sequence name %s"), *levelSeq->GetFName().ToString() );
+		UE_LOG(LogNadir, Warning, TEXT("active level sequence name %s"), *levelSeq->GetFName().ToString() );
 
 		return levelSeq;
 	}
@@ -105,16 +114,16 @@ struct Locals
 		FAssetRegistryModule* assetRegModule = FModuleManager::LoadModulePtr<FAssetRegistryModule>(AssetRegistryConstants::ModuleName);
 		if (!assetRegModule)
 		{
-			UE_LOG(LogNadirToolkit, Warning, TEXT("AssetRegistry module not loaded"));
+			UE_LOG(LogNadir, Warning, TEXT("AssetRegistry module not loaded"));
 			return;
 		}
-		//UE_LOG(LogNadirToolkit, Warning, TEXT("AssetRegistry memory usage = %.2f MB"), assetRegModule->Get().GetAllocatedSize() / (1024.0f * 1024.0f));
+		//UE_LOG(LogNadir, Warning, TEXT("AssetRegistry memory usage = %.2f MB"), assetRegModule->Get().GetAllocatedSize() / (1024.0f * 1024.0f));
 		
 		IAssetRegistry& assetRegistry = assetRegModule->Get();
 		TArray<FAssetData> levelSequenceAssetList;
 		assetRegistry.GetAssetsByClass(ULevelSequence::StaticClass()->GetFName(), levelSequenceAssetList);
 
-		UE_LOG(LogNadirToolkit, Warning, TEXT("# level sequence asset %i "), levelSequenceAssetList.Num() );
+		UE_LOG(LogNadir, Log, TEXT("# level sequence asset %i "), levelSequenceAssetList.Num() );
 
 			//for(FAssetData levelSeqAsset : levelSequenceAssetList) 
 			//{
@@ -131,55 +140,91 @@ struct Locals
 		return fframe * fpsUp / tickUp;
 	}
 
-	static void PrintHierarchy(const UActorComponent *comp)
+	static void CheckPossessed(ULevelSequence* levelSeq)
 	{
-
-	}
-
-	static void CheckPossessed(UMovieScene *movScn)
-	{
-		UE_LOG(LogNadirToolkit, Warning, TEXT("# possessables %i "), movScn->GetPossessableCount());
+		UMovieScene *movScn = levelSeq->GetMovieScene();
+		
+		UE_LOG(LogNadir, Warning, TEXT("# possessables %i "), movScn->GetPossessableCount());
+		
 		for (int i = 0; i < movScn->GetPossessableCount(); i++) {
 			FMovieScenePossessable & possi = movScn->GetPossessable(i);
-			UE_LOG(LogNadirToolkit, Warning, TEXT("possessable %s "), *possi.GetName() );
+			UE_LOG(LogNadir, Warning, TEXT("possessable %s "), *possi.GetName() );
 
 			const FGuid & possId = possi.GetGuid();
-			UE_LOG(LogNadirToolkit, Warning, TEXT("parent id is %i %i %i %i"), possId.A, possId.B, possId.C, possId.D );
+			UE_LOG(LogNadir, Warning, TEXT("parent id is %i %i %i %i"), possId.A, possId.B, possId.C, possId.D );
 
 		}
 
+	}
+
+	static AActor *GetFirstSelectedActorName(FString &actorName)
+	{
+/// 	int32 numSelActors = GEditor->GetSelectedActorCount();
+/// 	UE_LOG(LogNadir, Warning, TEXT("# Selected Actor %i"), numSelActors );
+
+		USelection* selActors = GEditor->GetSelectedActors();
+		for (FSelectionIterator Iter(*selActors); Iter; ++Iter)
+		{
+			if (AActor* levelActor = Cast<AActor>(*Iter))
+			{
+				actorName = levelActor->GetName();
+/// type of actor
+				if (levelActor->IsA(ACameraActor::StaticClass())) {
+					UE_LOG(LogNadir, Log, TEXT("%s is a camera "), *actorName);
+				}
+				return levelActor;
+			}
+		}
+
+		UE_LOG(LogNadir, Error, TEXT("nothing selected") );
+		return nullptr;
+	} 
+
+	static UMovieScene3DTransformTrack *GetActorTransformTrack(ULevelSequence* levelSeq, const FString &actorName)
+	{
+		UMovieScene *movScn = levelSeq->GetMovieScene();
+
 		const TArray < FMovieSceneBinding > &movBinds = movScn->GetBindings();
-		UE_LOG(LogNadirToolkit, Warning, TEXT("# bindings %i "), movBinds.Num() );
+///		UE_LOG(LogNadir, Warning, TEXT("# bindings %i "), movBinds.Num() );
+
 		for (int i = 0; i < movBinds.Num(); i++) {
-			UE_LOG(LogNadirToolkit, Warning, TEXT("bind %s "), *movBinds[i].GetName() );
+
+///			const TArray < UMovieSceneTrack * > & tracks = movBinds[i].GetTracks();
 
 			const FGuid& objId = movBinds[i].GetObjectGuid();
-			UE_LOG(LogNadirToolkit, Warning, TEXT("id is %i %i %i %i"), objId.A, objId.B, objId.C, objId.D );
-
-			const TArray < UMovieSceneTrack * > & tracks = movBinds[i].GetTracks();
-
-            UE_LOG(LogNadirToolkit, Warning, TEXT("# tracks %i "), tracks.Num() );
-
             static const FName s_transformTrackName(TEXT("Transform"));
 
-			UMovieScene3DTransformTrack* transformTrack = movScn->FindTrack<UMovieScene3DTransformTrack>(movBinds[i].GetObjectGuid(), s_transformTrackName);
-			if(transformTrack) {
-				UE_LOG(LogNadirToolkit, Warning, TEXT("found transform track") );
+			UMovieScene3DTransformTrack *transformTrack = movScn->FindTrack<UMovieScene3DTransformTrack>(objId, s_transformTrackName);
+			if(!transformTrack) {
+				continue;
+			}
+
+			TArray < UObject *, TInlineAllocator < 1 > > boundObjs;
+/// connection between binding id and actor reference
+			levelSeq->LocateBoundObjects(objId, nullptr, boundObjs);
+
+			if(boundObjs.Num() < 1) {
+				continue;
+			}
+
+			TWeakObjectPtr<UObject> firstBoundObjPtr = boundObjs[0];
+			UObject *firstBoundObj = firstBoundObjPtr.Get();
+			AActor *firstActor = Cast<AActor>(firstBoundObj);
+
+			if(!firstActor) {
+				continue;
+			}
+
+			if (firstActor->GetName() == actorName) {
+				return transformTrack;
 			}
 
 		}
-		
+
+		UE_LOG(LogNadir, Error, TEXT("cannot find transform track for %s"), *actorName );
+		return nullptr;
 	}
 
-/// https://answers.unrealengine.com/questions/813601/view.html
-/// Sequencer.cpp
-///for (auto AttachSection : AttachTrack->GetAllSections())
-///					FMovieSceneObjectBindingID ConstraintBindingID = (Cast<UMovieScene3DAttachSection>(AttachSection))->GetConstraintBindingID();
-///					for (auto ParentObject : FindBoundObjects(ConstraintBindingID.GetGuid(), ConstraintBindingID.GetSequenceID()) )
-///					{
-///						AttachParentActor = Cast<AActor>(ParentObject.Get());
-///						break;
-///					}
 
 	static FReply OnButtonSendClick()
 	{
@@ -188,57 +233,38 @@ struct Locals
 		if(!levelSeq) {
 			return FReply::Handled();
 		}
+
+		FString selActorName("unknown");
+
+		AActor *selActor = GetFirstSelectedActorName(selActorName);
+
+		if(!selActor) {
+			return FReply::Handled();
+		}
+					
+/// only works with possessables
+		UMovieScene3DTransformTrack *transTrack = GetActorTransformTrack(levelSeq, selActorName);
+		if(!transTrack) {
+			return FReply::Handled();
+		}
+		
+/// movie stats
 		UMovieScene *movScn = levelSeq->GetMovieScene();
-		CheckPossessed(movScn);
 
 		TRange < FFrameNumber > playbackRng = movScn->GetPlaybackRange();
 		FFrameNumber frameMin = playbackRng.GetLowerBoundValue();
 		FFrameNumber frameMax = playbackRng.GetUpperBoundValue();
 		FFrameRate tickRez = movScn->GetTickResolution();
-		UE_LOG(LogNadirToolkit, Warning, TEXT("tick resolution %i / %i "), tickRez.Numerator, tickRez.Denominator );
+		UE_LOG(LogNadir, Warning, TEXT("tick resolution %i / %i "), tickRez.Numerator, tickRez.Denominator );
 		FFrameRate fps = movScn->GetDisplayRate();
-		UE_LOG(LogNadirToolkit, Warning, TEXT("fps %i / %i "), fps.Numerator, fps.Denominator );
-		UE_LOG(LogNadirToolkit, Warning, TEXT("playback range %i %i "), 
+		UE_LOG(LogNadir, Warning, TEXT("fps %i / %i "), fps.Numerator, fps.Denominator );
+		UE_LOG(LogNadir, Warning, TEXT("playback range %i %i "), 
 			CalcFrameNumber(frameMin.Value, fps.Numerator, tickRez.Numerator),
 			CalcFrameNumber(frameMax.Value, fps.Numerator, tickRez.Numerator) );
 
-/// a few UEditorEngine functions
-
-		USelection* selComps = GEditor->GetSelectedComponents();
-		int32 numSelComps = 0;
-		for (FSelectionIterator Iter(*selComps); Iter; ++Iter)
-		{
-			numSelComps++;
-		}
-		UE_LOG(LogNadirToolkit, Warning, TEXT("# Selected Component %i"), numSelComps );
-
-		int32 numSelActors = GEditor->GetSelectedActorCount();
-		UE_LOG(LogNadirToolkit, Warning, TEXT("# Selected Actor %i"), numSelActors );
-
-		FString actorName("unknown");
-		USelection* SelectedActors = GEditor->GetSelectedActors();
-		for (FSelectionIterator Iter(*SelectedActors); Iter; ++Iter)
-		{
-			if (AActor* LevelActor = Cast<AActor>(*Iter))
-			{
-				actorName = LevelActor->GetName();
-
-/// type of actor
-				if (LevelActor->IsA(ACameraActor::StaticClass()))
-				{
-					UE_LOG(LogNadirToolkit, Warning, TEXT("%s is a camera "), *actorName );
-				}
-
-/// find track
-				FGuid actorGuid = FUniqueObjectGuid::GetOrCreateIDForObject(*Iter).GetGuid();
-
-				UE_LOG(LogNadirToolkit, Warning, TEXT("id is %i %i %i %i"), actorGuid.A, actorGuid.B, actorGuid.C, actorGuid.D );
-
-			}
-		}
-		ActorNameField->SetText(FText::FromString(actorName));
-		FText ft = ActorNameField->GetText();
-		UE_LOG(LogNadirToolkit, Warning, TEXT("Selected Actor's Name is %s"), *ft.ToString() );
+		ActorNameField->SetText(FText::FromString(selActorName));
+///		FText ft = ActorNameField->GetText();
+///		UE_LOG(LogNadir, Warning, TEXT("Selected Actor's Name is %s"), *ft.ToString() );
 
 		return FReply::Handled();
 	}

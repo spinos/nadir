@@ -25,4 +25,4 @@ private:
 	TSharedPtr<SWidget> ToolkitWidget;
 };
 
-DECLARE_LOG_CATEGORY_EXTERN(LogNadirToolkit, Log, All);
+DECLARE_LOG_CATEGORY_EXTERN(LogNadir, Log, All);
