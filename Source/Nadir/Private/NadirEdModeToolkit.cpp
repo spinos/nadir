@@ -16,65 +16,26 @@
 #include "Widgets/Input/SEditableTextBox.h"
 #include "Widgets/Text/STextBlock.h"
 #include "Widgets/Layout/SScrollBox.h"
-#include "Runtime/Slate/Public/Widgets/Input/SMultiLineEditableTextBox.h"
+#include "Widgets/Input/SMultiLineEditableTextBox.h"
 #include "EditorModeManager.h"
 #include "Camera/CameraActor.h"
 #include "LevelSequence.h"
 #include "LevelSequenceActor.h"
 #include "ILevelSequenceModule.h"
 #include "AssetRegistryModule.h"
-#include "Runtime/MovieSceneTracks/Public/Tracks/MovieScene3DTransformTrack.h"
+#include "Tracks/MovieScene3DTransformTrack.h"
+#include "DesktopPlatformModule.h"
+#include "EditorDirectories.h"
 
 DEFINE_LOG_CATEGORY(LogNadir);
 
 #define LOCTEXT_NAMESPACE "FNadirEdModeToolkit"
-
-FNadirEdModeToolkit::FNadirEdModeToolkit()
-{
-}
 
 struct Locals
 {
 	static bool IsWidgetEnabled()
 	{
 		return GEditor->GetSelectedActors()->Num() != 0;
-	}
-
-	static FReply OnButtonClick(FVector InOffset)
-	{
-		USelection* SelectedActors = GEditor->GetSelectedActors();
-
-		// Let editor know that we're about to do something that we want to undo/redo
-		GEditor->BeginTransaction(LOCTEXT("MoveActorsTransactionName", "MoveActors"));
-
-		// For each selected actor
-		for (FSelectionIterator Iter(*SelectedActors); Iter; ++Iter)
-		{
-			if (AActor* LevelActor = Cast<AActor>(*Iter))
-			{
-				// Register actor in opened transaction (undo/redo)
-				LevelActor->Modify();
-				// Move actor to given location
-				LevelActor->TeleportTo(LevelActor->GetActorLocation() + InOffset, FRotator(0, 0, 0));
-
-				FString actorName = LevelActor->GetName();
-				UE_LOG(LogNadir, Warning, TEXT("Actor's Name is %s"), *actorName);
-			}
-		}
-
-		// We're done moving actors so close transaction
-		GEditor->EndTransaction();
-
-		UE_LOG(LogNadir, Verbose, TEXT("Button is clicked"));
-
-		return FReply::Handled();
-	}
-
-	static TSharedRef<SWidget> MakeButton(FText InLabel, const FVector InOffset)
-	{
-		return SNew(SButton)
-			.Text(InLabel)
-			.OnClicked_Static(&Locals::OnButtonClick, InOffset);
 	}
 
 	static TSharedRef<SEditableTextBox> MakeField()
@@ -87,7 +48,7 @@ struct Locals
 	static TSharedRef<SMultiLineEditableTextBox> MakeStatsField()
 	{ 
 	    return SNew(SMultiLineEditableTextBox)
-			.Text(LOCTEXT("MiscStats", "Unknown stats"));
+			.Text(LOCTEXT("MiscStats", "unknown stats"));
 	}
 
 	static TSharedRef<SWidget> MakeSendButton(FText InLabel)
@@ -95,6 +56,13 @@ struct Locals
 		return SNew(SButton)
 			.Text(InLabel)
 			.OnClicked_Static(&Locals::OnButtonSendClick);
+	}
+
+	static TSharedRef<SButton> MakeSaveButton(FText InLabel)
+	{
+		return SNew(SButton)
+			.Text(InLabel)
+			.OnClicked_Static(&Locals::OnButtonSaveClick);
 	}
 
 	static ULevelSequence* GetActiveLevelSequence()
@@ -236,12 +204,21 @@ struct Locals
 		return nullptr;
 	}
 
+	static void ClearStatsField()
+	{
+		TAttribute<FText> statsAttr;
+        statsAttr.Set(FText::FromString(TEXT("unknown stats")));
+        MiscStatsField->SetText(statsAttr);
+
+        SaveActBtn->SetVisibility(EVisibility::Hidden);
+	}
 
 	static FReply OnButtonSendClick()
 	{
 		CountLevelSequences();
 		ULevelSequence* levelSeq = GetActiveLevelSequence();
 		if(!levelSeq) {
+			ClearStatsField();
 			return FReply::Handled();
 		}
 
@@ -250,12 +227,14 @@ struct Locals
 		AActor *selActor = GetFirstSelectedActorName(selActorName);
 
 		if(!selActor) {
+			ClearStatsField();
 			return FReply::Handled();
 		}
 					
 /// only works with possessables
 		UMovieScene3DTransformTrack *transTrack = GetActorTransformTrack(levelSeq, selActorName);
 		if(!transTrack) {
+			ClearStatsField();
 			return FReply::Handled();
 		}
 		
@@ -293,25 +272,65 @@ struct Locals
         statsAttr.Set(statsStr);
         MiscStatsField->SetText(statsAttr);
 
+        SaveActBtn->SetVisibility(EVisibility::Visible);
+
+		return FReply::Handled();
+	}
+
+	static FReply OnButtonSaveClick()
+	{
+		IDesktopPlatform * desktopPlatform = FDesktopPlatformModule::Get();
+		if(!desktopPlatform) {
+			UE_LOG(LogNadir, Error, TEXT("cannot find desktop platform") );
+			return FReply::Handled();
+		}
+
+		TArray<FString> saveFilenames;
+		bool saveFileNamePicked = desktopPlatform->SaveFileDialog(
+			FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr),
+			LOCTEXT( "ExportLevelSequence", "Export Track" ).ToString(),
+			*( FEditorDirectories::Get().GetLastDirectory( ELastDirectory::GENERIC_EXPORT ) ),
+			TEXT( "" ),
+			TEXT( "Text document|*.txt" ),
+			EFileDialogFlags::None,
+			saveFilenames );
+
+		if(!saveFileNamePicked) {
+			UE_LOG(LogNadir, Error, TEXT("file dialog aborted") );
+			return FReply::Handled();
+		}
+
+		const FString &saveFilename = saveFilenames[0];
+		FEditorDirectories::Get().SetLastDirectory( ELastDirectory::GENERIC_EXPORT, FPaths::GetPath( saveFilename ) ); // Save path as default for next time.
+
+		UE_LOG(LogNadir, Log, TEXT("save file to %s"), *saveFilename );
 		return FReply::Handled();
 	}
 
 ///	static TSharedPtr<SEditableTextBox> ActorNameField;
 	static TSharedPtr<SMultiLineEditableTextBox> MiscStatsField;
+	static TSharedPtr<SButton> SaveActBtn;
 	
 };
 
 ///TSharedPtr<SEditableTextBox> Locals::ActorNameField;
 TSharedPtr<SMultiLineEditableTextBox> Locals::MiscStatsField;
+TSharedPtr<SButton> Locals::SaveActBtn;
+
+FNadirEdModeToolkit::FNadirEdModeToolkit()
+{
+}
 
 void FNadirEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitHost)
 {
 	///TSharedRef<SEditableTextBox> actorNameField = Locals::MakeField();
 	TSharedRef<SMultiLineEditableTextBox> miscStatsField = Locals::MakeStatsField();
+	TSharedRef<SButton> saveActBtn = Locals::MakeSaveButton(LOCTEXT("SaveButtonLabel", "Export Track"));
+	saveActBtn->SetVisibility(EVisibility::Hidden);
 	
 /// ref to ptr conversion
-///	Locals::ActorNameField = actorNameField;
 	Locals::MiscStatsField = miscStatsField;
+	Locals::SaveActBtn = saveActBtn;
 
 	//SAssignNew(ToolkitWidget, SBorder)
 		//.HAlign(HAlign_Center)
@@ -374,6 +393,12 @@ void FNadirEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitHost)
 				.AutoHeight()
 				[
 					miscStatsField
+				]
+			+ SVerticalBox::Slot()
+				.HAlign(HAlign_Center)
+				.AutoHeight()
+				[
+					saveActBtn
 				]
 		];
 		

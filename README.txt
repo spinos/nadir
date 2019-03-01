@@ -5,3 +5,4 @@ Features:
 *Print level sequence name currently in editor
 *Find transform track of selected actor in level sequence
 *Print frame range, display rate, tick resolution, number of track sections
+*Open save file dialog

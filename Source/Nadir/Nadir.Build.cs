@@ -12,6 +12,8 @@ public class Nadir : ModuleRules
 			new string[] {
 				// ... add public include paths required here ...
                 "Runtime/LevelSequence/Public",
+                "Runtime/MovieSceneTracks/Public",
+                "Developer/DesktopPlatform/Public",
             }
 			);
 				
@@ -47,6 +49,7 @@ public class Nadir : ModuleRules
                 "MovieSceneTools",
                 "MovieSceneTracks",
                 "Sequencer",
+                "DesktopPlatform",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
