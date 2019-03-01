@@ -15,6 +15,8 @@
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Input/SEditableTextBox.h"
 #include "Widgets/Text/STextBlock.h"
+#include "Widgets/Layout/SScrollBox.h"
+#include "Runtime/Slate/Public/Widgets/Input/SMultiLineEditableTextBox.h"
 #include "EditorModeManager.h"
 #include "Camera/CameraActor.h"
 #include "LevelSequence.h"
@@ -81,6 +83,12 @@ struct Locals
 			.Text(LOCTEXT("ActorLabel", "Nothing selected"));
 
 	}
+	
+	static TSharedRef<SMultiLineEditableTextBox> MakeStatsField()
+	{ 
+	    return SNew(SMultiLineEditableTextBox)
+			.Text(LOCTEXT("MiscStats", "Unknown stats"));
+	}
 
 	static TSharedRef<SWidget> MakeSendButton(FText InLabel)
 	{
@@ -103,9 +111,7 @@ struct Locals
 			UE_LOG(LogNadir, Warning, TEXT("no active level sequence"));
 			return nullptr;
 		}
-
-		UE_LOG(LogNadir, Warning, TEXT("active level sequence name %s"), *levelSeq->GetFName().ToString() );
-
+		
 		return levelSeq;
 	}
 
@@ -198,6 +204,11 @@ struct Locals
 			if(!transformTrack) {
 				continue;
 			}
+			
+			if(transformTrack->IsEmpty()) {
+			    UE_LOG(LogNadir, Error, TEXT("empty transform track") );
+			    continue;
+		    }
 
 			TArray < UObject *, TInlineAllocator < 1 > > boundObjs;
 /// connection between binding id and actor reference
@@ -255,50 +266,71 @@ struct Locals
 		FFrameNumber frameMin = playbackRng.GetLowerBoundValue();
 		FFrameNumber frameMax = playbackRng.GetUpperBoundValue();
 		FFrameRate tickRez = movScn->GetTickResolution();
-		UE_LOG(LogNadir, Warning, TEXT("tick resolution %i / %i "), tickRez.Numerator, tickRez.Denominator );
 		FFrameRate fps = movScn->GetDisplayRate();
-		UE_LOG(LogNadir, Warning, TEXT("fps %i / %i "), fps.Numerator, fps.Denominator );
-		UE_LOG(LogNadir, Warning, TEXT("playback range %i %i "), 
-			CalcFrameNumber(frameMin.Value, fps.Numerator, tickRez.Numerator),
-			CalcFrameNumber(frameMax.Value, fps.Numerator, tickRez.Numerator) );
+///		UE_LOG(LogNadir, Warning, TEXT("tick resolution %i / %i "), tickRez.Numerator, tickRez.Denominator );
+///		UE_LOG(LogNadir, Warning, TEXT("fps %i / %i "), fps.Numerator, fps.Denominator );
+///		UE_LOG(LogNadir, Warning, TEXT("playback range %i %i "), 
+///			CalcFrameNumber(frameMin.Value, fps.Numerator, tickRez.Numerator),
+///			CalcFrameNumber(frameMax.Value, fps.Numerator, tickRez.Numerator) );
 
-		ActorNameField->SetText(FText::FromString(selActorName));
+///		ActorNameField->SetText(FText::FromString(selActorName));
 ///		FText ft = ActorNameField->GetText();
 ///		UE_LOG(LogNadir, Warning, TEXT("Selected Actor's Name is %s"), *ft.ToString() );
+///     UE_LOG(LogNadir, Warning, TEXT("active level sequence name %s"), *levelSeq->GetFName().ToString() );
+
+        const int32 frameBegin = CalcFrameNumber(frameMin.Value, fps.Numerator, tickRez.Numerator);
+		const int32 frameEnd = CalcFrameNumber(frameMax.Value, fps.Numerator, tickRez.Numerator);
+		
+		const TArray < UMovieSceneSection * > & trackSecs = transTrack->GetAllSections();
+		 
+        const FText statsStr = FText::Format(LOCTEXT("StatsText", "Actor: {0}\nLevel Sequence: {1}\nMovie Scene: playback [{2}:{3}] fps {4}\nTransform Track: #section {5}"), 
+           FText::FromString(selActorName),
+           FText::FromString(levelSeq->GetFName().ToString()),
+           frameBegin, frameEnd, fps.Numerator,
+           trackSecs.Num() ) ;
+        
+        TAttribute<FText> statsAttr;
+        statsAttr.Set(statsStr);
+        MiscStatsField->SetText(statsAttr);
 
 		return FReply::Handled();
 	}
 
-	static TSharedPtr<SEditableTextBox> ActorNameField;
-
+///	static TSharedPtr<SEditableTextBox> ActorNameField;
+	static TSharedPtr<SMultiLineEditableTextBox> MiscStatsField;
+	
 };
 
-TSharedPtr<SEditableTextBox> Locals::ActorNameField;
+///TSharedPtr<SEditableTextBox> Locals::ActorNameField;
+TSharedPtr<SMultiLineEditableTextBox> Locals::MiscStatsField;
 
 void FNadirEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitHost)
 {
-
-	const float Factor = 256.0f;
-
-	TSharedRef<SEditableTextBox> actorNameField = Locals::MakeField();
+	///TSharedRef<SEditableTextBox> actorNameField = Locals::MakeField();
+	TSharedRef<SMultiLineEditableTextBox> miscStatsField = Locals::MakeStatsField();
+	
 /// ref to ptr conversion
-	Locals::ActorNameField = actorNameField;
+///	Locals::ActorNameField = actorNameField;
+	Locals::MiscStatsField = miscStatsField;
 
-	SAssignNew(ToolkitWidget, SBorder)
-		.HAlign(HAlign_Center)
+	//SAssignNew(ToolkitWidget, SBorder)
+		//.HAlign(HAlign_Center)
+	SAssignNew(ToolkitWidget, SScrollBox )
+		+SScrollBox::Slot()
 		.Padding(25)
-		.IsEnabled_Static(&Locals::IsWidgetEnabled)
+		//.IsEnabled_Static(&Locals::IsWidgetEnabled)
 		[
 			SNew(SVerticalBox)
 			+ SVerticalBox::Slot()
 			.AutoHeight()
 			.HAlign(HAlign_Center)
-			.Padding(50)
+			.Padding(15)
 			[
 				SNew(STextBlock)
 				.AutoWrapText(true)
-				.Text(LOCTEXT("HelperLabel", "Select some actors and move them around using buttons below"))
+				.Text(LOCTEXT("HelperLabel", "Select some actor and show statistics below"))
 			]
+			/*
 			+ SVerticalBox::Slot()
 				.HAlign(HAlign_Center)
 				.AutoHeight()
@@ -309,24 +341,9 @@ void FNadirEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitHost)
 				.HAlign(HAlign_Center)
 				.AutoHeight()
 				[
-					SNew(SHorizontalBox)
-					+ SHorizontalBox::Slot()
-					.AutoWidth()
-					[
-						Locals::MakeButton(LOCTEXT("LeftButtonLabel", "Left"), FVector(0, -Factor, 0))
-					]
-					+ SHorizontalBox::Slot()
-						.AutoWidth()
-						[
-							Locals::MakeButton(LOCTEXT("RightButtonLabel", "Right"), FVector(0, Factor, 0))
-						]
-				]
-			+ SVerticalBox::Slot()
-				.HAlign(HAlign_Center)
-				.AutoHeight()
-				[
 					Locals::MakeButton(LOCTEXT("DownButtonLabel", "Down"), FVector(0, 0, -Factor))
 				]
+				
 			+ SVerticalBox::Slot()
 				.HAlign(HAlign_Left)
 				.AutoHeight()
@@ -345,13 +362,19 @@ void FNadirEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitHost)
 						actorNameField
 					]	
 				]
+				*/
 			+ SVerticalBox::Slot()
 				.HAlign(HAlign_Center)
 				.AutoHeight()
 				[
-					Locals::MakeSendButton(LOCTEXT("SendButtonLabel", "Send"))
+					Locals::MakeSendButton(LOCTEXT("SendButtonLabel", "Load Selected"))
 				]
-
+			+ SVerticalBox::Slot()
+				.HAlign(HAlign_Left)
+				.AutoHeight()
+				[
+					miscStatsField
+				]
 		];
 		
 	FModeToolkit::Init(InitToolkitHost);
