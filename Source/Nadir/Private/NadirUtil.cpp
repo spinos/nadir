@@ -1,0 +1,250 @@
+///
+/// https://answers.unrealengine.com/questions/813601/view.html
+
+#include "NadirUtil.h"
+#include "AssetRegistryModule.h"
+#include "Channels/MovieSceneChannelProxy.h"
+
+DEFINE_LOG_CATEGORY(LogNadirUtil);
+
+
+/// https://docs.unrealengine.com/en-us/Engine/Sequencer/Workflow/SequencerTimeRefactorNotes
+int32 NadirUtil::CalcFrameNumber(int32 fframe, int32 fpsUp, int32 tickUp)
+{
+	return fframe * fpsUp / tickUp;
+}
+
+ULevelSequence* NadirUtil::GetActiveLevelSequence()
+{
+	TArray < UObject * > currentAssets = FAssetEditorManager::Get().GetAllEditedAssets();
+	if (currentAssets.Num() < 1) {
+		UE_LOG(LogNadirUtil, Warning, TEXT("no active asset"));
+		return nullptr;
+	}
+
+	ULevelSequence* levelSeq = Cast<ULevelSequence>(currentAssets[0]);
+	if (!levelSeq)
+	{
+		UE_LOG(LogNadirUtil, Warning, TEXT("no active level sequence"));
+		return nullptr;
+	}
+
+	return levelSeq;
+}
+
+AActor *NadirUtil::GetFirstSelectedActorName(FString &actorName)
+{
+	/// 	int32 numSelActors = GEditor->GetSelectedActorCount();
+	/// 	UE_LOG(LogNadirUtil, Warning, TEXT("# Selected Actor %i"), numSelActors );
+
+	USelection* selActors = GEditor->GetSelectedActors();
+	for (FSelectionIterator Iter(*selActors); Iter; ++Iter)
+	{
+		if (AActor* levelActor = Cast<AActor>(*Iter))
+		{
+			actorName = levelActor->GetName();
+			/// type of actor
+			if (levelActor->IsA(ACameraActor::StaticClass())) {
+				UE_LOG(LogNadirUtil, Log, TEXT("%s is a camera "), *actorName);
+			}
+			return levelActor;
+		}
+	}
+
+	UE_LOG(LogNadirUtil, Error, TEXT("nothing selected"));
+	return nullptr;
+}
+
+UMovieScene3DTransformTrack *NadirUtil::GetActorTransformTrack(ULevelSequence* levelSeq, const FString &actorName)
+{
+	UMovieScene *movScn = levelSeq->GetMovieScene();
+
+	const TArray < FMovieSceneBinding > &movBinds = movScn->GetBindings();
+	///		UE_LOG(LogNadirUtil, Warning, TEXT("# bindings %i "), movBinds.Num() );
+
+	for (int i = 0; i < movBinds.Num(); i++) {
+
+		///			const TArray < UMovieSceneTrack * > & tracks = movBinds[i].GetTracks();
+
+		const FGuid& objId = movBinds[i].GetObjectGuid();
+		static const FName s_transformTrackName(TEXT("Transform"));
+
+		UMovieScene3DTransformTrack *transformTrack = movScn->FindTrack<UMovieScene3DTransformTrack>(objId, s_transformTrackName);
+		if (!transformTrack) {
+			continue;
+		}
+
+		if (transformTrack->IsEmpty()) {
+			UE_LOG(LogNadirUtil, Error, TEXT("empty transform track"));
+			continue;
+		}
+
+		TArray < UObject *, TInlineAllocator < 1 > > boundObjs;
+		/// connection between binding id and actor reference
+		levelSeq->LocateBoundObjects(objId, nullptr, boundObjs);
+
+		if (boundObjs.Num() < 1) {
+			continue;
+		}
+
+		TWeakObjectPtr<UObject> firstBoundObjPtr = boundObjs[0];
+		UObject *firstBoundObj = firstBoundObjPtr.Get();
+		AActor *firstActor = Cast<AActor>(firstBoundObj);
+
+		if (!firstActor) {
+			continue;
+		}
+
+		if (firstActor->GetName() == actorName) {
+			return transformTrack;
+		}
+
+	}
+
+	UE_LOG(LogNadirUtil, Error, TEXT("cannot find transform track for %s"), *actorName);
+	return nullptr;
+}
+
+void NadirUtil::CountLevelSequences()
+{
+	FAssetRegistryModule* assetRegModule = FModuleManager::LoadModulePtr<FAssetRegistryModule>(AssetRegistryConstants::ModuleName);
+	if (!assetRegModule)
+	{
+		UE_LOG(LogNadirUtil, Warning, TEXT("AssetRegistry module not loaded"));
+		return;
+	}
+	//UE_LOG(LogNadirUtil, Warning, TEXT("AssetRegistry memory usage = %.2f MB"), assetRegModule->Get().GetAllocatedSize() / (1024.0f * 1024.0f));
+
+	IAssetRegistry& assetRegistry = assetRegModule->Get();
+	TArray<FAssetData> levelSequenceAssetList;
+	assetRegistry.GetAssetsByClass(ULevelSequence::StaticClass()->GetFName(), levelSequenceAssetList);
+
+	UE_LOG(LogNadirUtil, Log, TEXT("# level sequence asset %i "), levelSequenceAssetList.Num());
+
+	//for(FAssetData levelSeqAsset : levelSequenceAssetList) 
+	//{
+	//	ULevelSequence *levelSeq = Cast<ULevelSequence>(levelSeqAsset.GetAsset());
+		/// level sequence editor
+		//IAssetEditorInstance* assetEditor = FAssetEditorManager::Get().FindEditorForAsset(levelSeq, true);
+	//}
+
+}
+
+void NadirUtil::CheckPossessed(ULevelSequence* levelSeq)
+{
+	UMovieScene *movScn = levelSeq->GetMovieScene();
+
+	UE_LOG(LogNadirUtil, Warning, TEXT("# possessables %i "), movScn->GetPossessableCount());
+
+	for (int i = 0; i < movScn->GetPossessableCount(); i++) {
+		FMovieScenePossessable & possi = movScn->GetPossessable(i);
+		UE_LOG(LogNadirUtil, Warning, TEXT("possessable %s "), *possi.GetName());
+
+		const FGuid & possId = possi.GetGuid();
+		UE_LOG(LogNadirUtil, Warning, TEXT("parent id is %i %i %i %i"), possId.A, possId.B, possId.C, possId.D);
+
+	}
+
+}
+
+bool NadirUtil::CheckTrackSections(const TArray < UMovieSceneSection * > & trackSecs)
+{
+	if(trackSecs.Num() < 1) return false;
+
+	for(UMovieSceneSection * asect : trackSecs) {
+		TRange < FFrameNumber > sectRange = asect->GetRange();
+		FMovieSceneChannelProxy & channelPrx = asect->GetChannelProxy();
+
+		LsChannels(channelPrx);
+
+	}
+
+	return true;
+}
+
+void NadirUtil::LsChannels(FMovieSceneChannelProxy & channelPrx)
+{
+	TArrayView < const FMovieSceneChannelMetaData > channelData = channelPrx.GetMetaData<FMovieSceneFloatChannel>();
+	TArrayView<FMovieSceneFloatChannel *> channels = channelPrx.GetChannels<FMovieSceneFloatChannel>();
+		
+	for(const FMovieSceneChannelMetaData adata : channelData) {
+		FName channelName = adata.Name;
+		uint8 channelOrder = adata.SortOrder;
+
+		UE_LOG(LogNadirUtil, Warning, TEXT("found channel %s order %i "), *channelName.ToString(), channelOrder );
+
+		const FMovieSceneFloatChannel *achannel = channels[channelOrder];
+
+		LsKeys(*achannel);
+
+	}
+}
+
+void NadirUtil::LsKeys(const FMovieSceneFloatChannel &achannel)
+{
+	UE_LOG(LogNadirUtil, Warning, TEXT("# key %i "), achannel.GetNumKeys());
+
+	TArrayView<const FFrameNumber>          channelTimes  = achannel.GetTimes();
+	TArrayView<const FMovieSceneFloatValue> channelValues = achannel.GetValues();
+
+	for (int32 i = 0; i < channelTimes.Num(); ++i) {
+		FFrameNumber          keyTime  = channelTimes[i];
+		FMovieSceneFloatValue keyValue = channelValues[i];
+
+		UE_LOG(LogNadirUtil, Log, TEXT("key time %i value %f interp mode %s tangent mode %s"), 
+			keyTime.Value, keyValue.Value,
+			*InterpModeAsStr(keyValue.InterpMode), *TangentModeAsStr(keyValue.TangentMode));
+
+		if(keyValue.InterpMode = ERichCurveInterpMode::RCIM_Cubic) PrintTangent(keyValue.Tangent);
+	}
+}
+
+FString NadirUtil::InterpModeAsStr(ERichCurveInterpMode x)
+{
+	if(x == ERichCurveInterpMode::RCIM_Cubic)
+		return FString("cubic");
+
+	if(x == ERichCurveInterpMode::RCIM_Linear)
+		return FString("linear");
+
+	if(x == ERichCurveInterpMode::RCIM_Constant)
+		return FString("constant");
+
+	return FString("none");
+}
+
+FString NadirUtil::TangentModeAsStr(ERichCurveTangentMode x)
+{
+	if(x == ERichCurveTangentMode::RCTM_Auto)
+		return FString("auto");
+
+	if(x == ERichCurveTangentMode::RCTM_User)
+		return FString("user");
+
+	if(x == ERichCurveTangentMode::RCTM_Break)
+		return FString("break");
+
+	return FString("none");
+}
+
+void NadirUtil::PrintTangent(const FMovieSceneTangentData & tangent)
+{
+	FString twm("none");
+
+	if(tangent.TangentWeightMode == ERichCurveTangentWeightMode::RCTWM_WeightedArrive)
+		twm = FString("arrive");
+
+	else if(tangent.TangentWeightMode == ERichCurveTangentWeightMode::RCTWM_WeightedLeave)
+		twm = FString("leave");
+
+	else if(tangent.TangentWeightMode == ERichCurveTangentWeightMode::RCTWM_WeightedBoth)
+		twm = FString("both");
+
+	UE_LOG(LogNadirUtil, Log, TEXT("arrive %f weight %f leave %f weight %f mode %s"), 
+		tangent.ArriveTangent,
+		tangent.ArriveTangentWeight,
+		tangent.LeaveTangent,
+		tangent.LeaveTangentWeight,
+		*twm
+	);
+}
