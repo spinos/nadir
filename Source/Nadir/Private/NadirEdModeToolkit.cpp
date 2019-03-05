@@ -15,6 +15,18 @@
 #include "DesktopPlatformModule.h"
 #include "EditorDirectories.h"
 
+/// disable GCC diagnostic pragmas via H5public.h
+#define __GNUC__ 4
+#define __GNUC_MINOR__ 5
+/// ssize_t via H5public.h
+#define H5_SIZEOF_SSIZE_T 0
+/// dllexport via H5api_adpt.h
+#define H5_BUILT_AS_DYNAMIC_LIB
+
+#include "hdf5.h"
+#include "zlib.h"
+#include "szlib.h"
+
 DEFINE_LOG_CATEGORY(LogNadir);
 
 #define LOCTEXT_NAMESPACE "FNadirEdModeToolkit"
