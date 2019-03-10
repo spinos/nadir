@@ -2,6 +2,7 @@
 
 #include "Nadir.h"
 #include "NadirEdMode.h"
+#include "Interfaces/IPluginManager.h"
 
 #define LOCTEXT_NAMESPACE "FNadirModule"
 
@@ -29,6 +30,29 @@ void FNadirModule::Register()
 		LOCTEXT("NadirEdModeName", "NadirEditMode"), 
 		FSlateIcon(), 
 		true);
+
+	// Get the base directory of this plugin
+	FString BaseDir = IPluginManager::Get().FindPlugin("Nadir")->GetBaseDir();
+
+	// Add on the relative location of the third party dll and load it
+	FString LibraryPath;
+#if PLATFORM_WINDOWS
+	LibraryPath = FPaths::Combine(*BaseDir, TEXT("Source/ThirdParty/exampleLib/ExampleLib.dll"));
+#elif PLATFORM_MAC
+	LibraryPath = FPaths::Combine(*BaseDir, TEXT("Source/ThirdParty/FoolLibrary/Mac/Release/libExampleLibrary.dylib"));
+#endif // PLATFORM_WINDOWS
+
+	void* ExampleLibraryHandle = !LibraryPath.IsEmpty() ? FPlatformProcess::GetDllHandle(*LibraryPath) : nullptr;
+
+	if (ExampleLibraryHandle)
+	{
+		// Call the test function in the third party library that opens a message box
+		//ExampleLibraryFunction();
+	}
+	else
+	{
+		FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("ThirdPartyLibraryError", "Failed to load example third party library"));
+	}
 }
 
 void FNadirModule::Unregister()

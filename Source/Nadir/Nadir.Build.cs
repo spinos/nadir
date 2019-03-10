@@ -11,8 +11,6 @@ public class Nadir : ModuleRules
 		PublicIncludePaths.AddRange(
 			new string[] {
 				// ... add public include paths required here ...
-                "Runtime/LevelSequence/Public",
-                "Runtime/MovieSceneTracks/Public",
                 "Developer/DesktopPlatform/Public",
             }
 			);
@@ -29,6 +27,10 @@ public class Nadir : ModuleRules
 			new string[]
 			{
 				"Core",
+                "LevelSequence",
+                "MovieSceneTracks",
+                "ExampleLib",
+                "Projects",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);

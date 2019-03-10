@@ -14,18 +14,8 @@
 #include "ILevelSequenceModule.h"
 #include "DesktopPlatformModule.h"
 #include "EditorDirectories.h"
-
-/// disable GCC diagnostic pragmas via H5public.h
-#define __GNUC__ 4
-#define __GNUC_MINOR__ 5
-/// ssize_t via H5public.h
-#define H5_SIZEOF_SSIZE_T 0
-/// dllexport via H5api_adpt.h
-#define H5_BUILT_AS_DYNAMIC_LIB
-
-#include "hdf5.h"
-#include "zlib.h"
-#include "szlib.h"
+#include "exampleLib/ExampleLibrary.h"
+#include "exampleLib/ExampleLibraryData.h"
 
 DEFINE_LOG_CATEGORY(LogNadir);
 
@@ -167,6 +157,21 @@ struct Locals
 		FEditorDirectories::Get().SetLastDirectory( ELastDirectory::GENERIC_EXPORT, FPaths::GetPath( saveFilename ) ); // Save path as default for next time.
 
 		UE_LOG(LogNadir, Log, TEXT("save file to %s"), *saveFilename );
+
+		ExampleLibraryData d;
+		d._name = "foxtrap";
+		d._age = 43;
+		ExampleLibraryFunction(d);
+
+		std::string tmpDir("D:/tmp");
+		bool isTmpFolder = ExampleLibraryTestDirectory(tmpDir);
+		if (isTmpFolder) {
+			UE_LOG(LogNadir, Log, TEXT("D:/tmp is a folder"));
+		}
+		else {
+			UE_LOG(LogNadir, Log, TEXT("D:/tmp is not a folder"));
+		}
+
 		return FReply::Handled();
 	}
 
