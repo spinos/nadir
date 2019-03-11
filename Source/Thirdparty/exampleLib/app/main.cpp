@@ -11,6 +11,8 @@ int main(int argc, char *argv[])
     else
         std::cout << " not a folder ";
     
+    std::cout << "\n test hdf5 " << ExampleLibraryTestHdf("D:/foo.hes");
+    
     ExampleLibraryData d;
     d._name = "foxtrap";
     d._age = 43;

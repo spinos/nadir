@@ -11,7 +11,7 @@ public class Nadir : ModuleRules
 		PublicIncludePaths.AddRange(
 			new string[] {
 				// ... add public include paths required here ...
-                "Developer/DesktopPlatform/Public",
+                //"Developer/DesktopPlatform/Public",
             }
 			);
 				
@@ -29,8 +29,9 @@ public class Nadir : ModuleRules
 				"Core",
                 "LevelSequence",
                 "MovieSceneTracks",
+                "Projects", /// needed for IPluginManager
                 "ExampleLib",
-                "Projects",
+                "DesktopPlatform"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -51,7 +52,6 @@ public class Nadir : ModuleRules
                 "MovieSceneTools",
                 "MovieSceneTracks",
                 "Sequencer",
-                "DesktopPlatform",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
@@ -63,5 +63,11 @@ public class Nadir : ModuleRules
 				// ... add any modules that your module loads dynamically here ...
 			}
 			);
-	}
+
+        if (Target.Platform == UnrealTargetPlatform.Win64)
+        {
+            
+
+        }
+    }
 }

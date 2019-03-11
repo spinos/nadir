@@ -7,6 +7,7 @@ Features:
 *Print frame range, display rate, tick resolution, track info
 *Open save file dialog
 *Use boost via third party library
+*Use hdf5 via third party library
 
 How to use Boost:
 *Have a lot errors when mixing boost and unreal headers. A workaround is to compile a dynamic library
@@ -16,3 +17,9 @@ so they won't be exposed to unreal.
 *In the main plugin module, call PublicDependencyModuleNames.AddRange("whatever") to find the library headers. 
 *During module startup, call FPlatformProcess::GetDllHandle("path_to_whatever_dll") to load the dynamic library,
 before invoking functions inside it.
+
+How to use HDF5:
+*Shared hdf5 library won't work. Edit option (BUILD_SHARED_LIBS "Build Shared Libraries" OFF) to build static library only.
+In CMakeFilters.cmake, set to find zlib and szip static librarties only. Build zlib and szip static library only as well.
+Link static hdf5, zlib, szip, so everything will reside inside the third party library. Resulting dll will be a lot bigger.
+*Load third party dll only. No need to load hdf5, zlib, szip dlls any more.

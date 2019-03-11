@@ -172,6 +172,15 @@ struct Locals
 			UE_LOG(LogNadir, Log, TEXT("D:/tmp is not a folder"));
 		}
 
+		std::string hdfFileName("D:/foo.hes");
+		bool isHdfSaved = ExampleLibraryTestHdf(hdfFileName);
+		if (isHdfSaved) {
+			UE_LOG(LogNadir, Log, TEXT("hdf5 is saved"));
+		}
+		else {
+			UE_LOG(LogNadir, Log, TEXT("hdf5 is not saved"));
+		}
+
 		return FReply::Handled();
 	}
 

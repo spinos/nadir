@@ -21,4 +21,8 @@ public:
 protected:
 	void Register();
 	void Unregister();
+
+private:
+	void *m_hdf5LibraryHandle;
+
 };
