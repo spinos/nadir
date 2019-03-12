@@ -159,8 +159,7 @@ struct Locals
 		UE_LOG(LogNadir, Log, TEXT("save file to %s"), *saveFilename );
 
 		ExampleLibraryData d;
-		d._name = "foxtrap";
-		d._age = 43;
+		d.setNameAge("foxbat", 49);
 		ExampleLibraryFunction(d);
 
 		std::string tmpDir("D:/tmp");

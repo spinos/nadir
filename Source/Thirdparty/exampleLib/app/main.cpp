@@ -14,8 +14,7 @@ int main(int argc, char *argv[])
     std::cout << "\n test hdf5 " << ExampleLibraryTestHdf("D:/foo.hes");
     
     ExampleLibraryData d;
-    d._name = "foxtrap";
-    d._age = 43;
+    d.setNameAge("foxtrap", 43);
 	ExampleLibraryFunction(d);
     return 1;
 }
