@@ -24,7 +24,7 @@ extern "C"
 
 DLLEXPORT void ExampleLibraryFunction(const ExampleLibraryData &msg)
 {
-    std::string fullmsg = boost::str(boost::format("hellow world %1% %2% of how to use dll") % msg._name % msg._age );
+    std::string fullmsg = boost::str(boost::format("hellow world %1% %2% of how to use dll") % msg.name() % msg.age() );
 #if defined _WIN32 || defined _WIN64
 	MessageBox(NULL, TEXT(fullmsg.c_str()), NULL, MB_OK);
 #else
