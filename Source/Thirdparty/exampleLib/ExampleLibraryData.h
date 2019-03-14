@@ -4,16 +4,18 @@
 #endif
 #include <string>
 
+class ABCD;
+
 class DLLEXPORT ExampleLibraryData {
     
-    std::string _name;
-    int _age;
+    ABCD *_data;
     
 public:
     
     ExampleLibraryData();
+    virtual ~ExampleLibraryData();
     
-    void setNameAge(const std::string &nm, int ag);
+   	void setNameAge(const std::string &nm, int ag);
     
     const std::string &name() const;
     const int &age() const;
