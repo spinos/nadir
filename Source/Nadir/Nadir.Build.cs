@@ -44,6 +44,7 @@ public class Nadir : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
+                "EditorStyle",
 				"InputCore",
 				"UnrealEd",
 				"LevelEditor",

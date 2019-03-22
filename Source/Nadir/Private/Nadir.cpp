@@ -2,6 +2,7 @@
 
 #include "Nadir.h"
 #include "NadirEdMode.h"
+#include "NadirEdModeStyle.h"
 #include "Interfaces/IPluginManager.h"
 #include <string>
 
@@ -28,8 +29,8 @@ void FNadirModule::ShutdownModule()
 
 void FNadirModule::Register()
 {
+	FNadirEdModeStyle::Initialize();
 
-	//FMeshEditorStyle::Initialize();
 	// Get the base directory of this plugin
 	FString BaseDir = IPluginManager::Get().FindPlugin("Nadir")->GetBaseDir();
 
@@ -65,7 +66,7 @@ void FNadirModule::Register()
 
 	FEditorModeRegistry::Get().RegisterMode<FNadirEdMode>(FNadirEdMode::EM_NadirEdModeId, 
 		LOCTEXT("NadirEdModeName", "NadirEditMode"), 
-		FSlateIcon(), 
+		FSlateIcon(FNadirEdModeStyle::GetStyleSetName(), "NadirEditor.Tab" ),
 		true);
 
 }
@@ -74,7 +75,7 @@ void FNadirModule::Unregister()
 {
 	FEditorModeRegistry::Get().UnregisterMode(FNadirEdMode::EM_NadirEdModeId);
 
-	//FMeshEditorStyle::Shutdown();
+	FNadirEdModeStyle::Shutdown();
 }
 
 #undef LOCTEXT_NAMESPACE

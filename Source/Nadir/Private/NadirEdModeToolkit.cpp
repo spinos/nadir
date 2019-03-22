@@ -3,6 +3,7 @@
 #include "NadirEdModeToolkit.h"
 #include "NadirEdMode.h"
 #include "NadirUtil.h"
+#include "NadirEdModeStyle.h"
 #include "Engine/Selection.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Input/SEditableTextBox.h"
