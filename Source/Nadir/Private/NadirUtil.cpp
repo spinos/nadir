@@ -247,4 +247,40 @@ void NadirUtil::PrintTangent(const FMovieSceneTangentData & tangent)
 		tangent.LeaveTangentWeight,
 		*twm
 	);
+
+/// Runtime/Core/Public/Misc/FrameRate.h
+/// AsInterval() = double(Denominator) / double(Numerator) "The time in seconds for a single frame under this frame rate"
+/// AsDecimal() = double(Numerator) / double(Denominator)
+/// Runtime/MovieScene/Private/Channels/MovieSceneFloatChannel.cpp
+/// float NewTangent = 0.f;
+/// AutoCalcTangent(PrevKey.Value, ThisKey.Value, NextKey.Value, Tension, NewTangent);
+/// NewTangent /= PrevToNextTimeDiff;
+/// Runtime/Core/Public/Math/InterpCurvePoint.h
+/// OutTan = (1.f - Tension) * ( (P - PrevP) + (NextP - P) ) where Tension is 0
+/// angle = atan(dQ/dt)
+/// dQ in real? value
+/// dt in frames
+/// changed 50 in 50 frames, angle is 45 deg
+/// tangent = angle / ticks-per-frame
+	float ticksPerFrame = 24000 / 30;
+	float tangentAngle = FMath::Atan(tangent.ArriveTangent * ticksPerFrame);
+	float tangentAngleInDegree = tangentAngle * 180 / 3.14159;
+	float oneThird = 1.f / 3.f;
+	
+	float secondPerFrame = 1.f / 30.f;
+	float dt = 50.f * secondPerFrame;
+
+	const float tangentNormalized = tangent.ArriveTangent * ticksPerFrame * secondPerFrame;
+
+	float dQ = tangentNormalized * dt;
+/// default (none) weight has nothing to do with weight displayed
+/// simply the lenght of hypotenuse 
+	float tangentWeight = FMath::Sqrt(dQ * dQ + dt * dt) * oneThird;
+/// user weight is absolute y size at the end of the handle? 
+/// independent of dQ and dt
+
+	UE_LOG(LogNadirUtil, Error, TEXT("arrive tangent angle %f weight %f"),
+		tangentAngleInDegree,
+		tangentWeight
+	);
 }
