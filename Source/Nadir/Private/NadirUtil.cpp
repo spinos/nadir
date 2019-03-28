@@ -252,32 +252,54 @@ void NadirUtil::PrintTangent(const FMovieSceneTangentData & tangent)
 /// AsInterval() = double(Denominator) / double(Numerator) "The time in seconds for a single frame under this frame rate"
 /// AsDecimal() = double(Numerator) / double(Denominator)
 /// Runtime/MovieScene/Private/Channels/MovieSceneFloatChannel.cpp
-/// float NewTangent = 0.f;
+/// const float PrevToNextTimeDiff = FMath::Max<double>(KINDA_SMALL_NUMBER, Times[Index+1].Value - Times[Index-1].Value);
 /// AutoCalcTangent(PrevKey.Value, ThisKey.Value, NextKey.Value, Tension, NewTangent);
 /// NewTangent /= PrevToNextTimeDiff;
 /// Runtime/Core/Public/Math/InterpCurvePoint.h
 /// OutTan = (1.f - Tension) * ( (P - PrevP) + (NextP - P) ) where Tension is 0
 /// angle = atan(dQ/dt)
-/// dQ in real? value
-/// dt in frames
-/// changed 50 in 50 frames, angle is 45 deg
-/// tangent = angle / ticks-per-frame
-	float ticksPerFrame = 24000 / 30;
-	float tangentAngle = FMath::Atan(tangent.ArriveTangent * ticksPerFrame);
+/// dt in ticks
+/// Q changed 1 in 1 second, angle is 45 deg
+/// tangent = angle / ticks-per-second
+/// tangent is dQ-per-tick
+	float ticksPerSecond = 24000;
+	float tangentAngle = FMath::Atan(tangent.ArriveTangent * ticksPerSecond);
 	float tangentAngleInDegree = tangentAngle * 180 / 3.14159;
-	float oneThird = 1.f / 3.f;
+
+/// TickResolution        The tick resolution with which to interpret this channel's times
+/// const float TimeInterval = TickResolution.AsInterval();
+///	const float ToSeconds = 1.0f / TimeInterval;
+/// const double Time1 = TickResolution.AsSeconds(Times[Index1].Value);
+///	const double Time2 = TickResolution.AsSeconds(Times[Index2].Value);
+///	const float X = Time2 - Time1;
+/// float Angle = FMath::Atan(Key1.Tangent.LeaveTangent * ToSeconds);
+///	const float ArriveTangentNormalized = Key2.Tangent.ArriveTangent / (TimeInterval);
+///	const float Y = ArriveTangentNormalized * X;
+///	ArriveWeight = FMath::Sqrt(X*X + Y * Y) * OneThird;
+/// weight is base on second
+
+	float oneThird = 1.f / 3.f;	
+	float secondPerTick = 1.f / 24000.f;
 	
-	float secondPerFrame = 1.f / 30.f;
-	float dt = 50.f * secondPerFrame;
-
-	const float tangentNormalized = tangent.ArriveTangent * ticksPerFrame * secondPerFrame;
-
+/// normalized to change-per-second
+	const float tangentNormalized = tangent.ArriveTangent * ticksPerSecond;
+/// 1 second
+	float dt = 1.f;
 	float dQ = tangentNormalized * dt;
 /// default (none) weight has nothing to do with weight displayed
 /// simply the lenght of hypotenuse 
 	float tangentWeight = FMath::Sqrt(dQ * dQ + dt * dt) * oneThird;
 /// user weight is absolute y size at the end of the handle? 
 /// independent of dQ and dt
+
+/// unweighted bezier curve control points depends on time difference
+///	const int32 Diff = Times[Index2].Value - Times[Index1].Value;
+///	const float P0 = Key1.Value;
+///	const float P1 = P0 + (Key1.Tangent.LeaveTangent * Diff * OneThird);
+///	const float P3 = Key2.Value;
+///	const float P2 = P3 - (Key2.Tangent.ArriveTangent * Diff * OneThird);
+/// BezierInterp(P0, P1, P2, P3, Interp); where Interp is t
+///	OutValue = Params.ValueOffset + BezierInterp(P0, P1, P2, P3, Interp);
 
 	UE_LOG(LogNadirUtil, Error, TEXT("arrive tangent angle %f weight %f"),
 		tangentAngleInDegree,
