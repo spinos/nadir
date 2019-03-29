@@ -56,6 +56,13 @@ struct Locals
 			.OnClicked_Static(&Locals::OnButtonSaveClick);
 	}
 
+	static TSharedRef<SButton> MakeTestRotationButton(FText InLabel)
+	{
+		return SNew(SButton)
+			.Text(InLabel)
+			.OnClicked_Static(&Locals::OnButtonTestRotationClick);
+	}
+
 	static void ClearStatsField()
 	{
 		TAttribute<FText> statsAttr;
@@ -184,6 +191,70 @@ struct Locals
 		return FReply::Handled();
 	}
 
+	static FReply OnButtonTestRotationClick()
+	{
+		USelection* selActors = GEditor->GetSelectedActors();
+		if (selActors->Num() < 1) {
+			UE_LOG(LogNadirUtil, Error, TEXT("select an actor ") );
+			return FReply::Handled();
+		}
+
+		FSelectionIterator Iter(*selActors);
+		AActor* levelActor = Cast<AActor>(*Iter);
+		FString actorName = levelActor->GetName();
+		UE_LOG(LogNadirUtil, Log, TEXT("actor name %s "), *actorName);
+
+		FTransform tm = levelActor->GetActorTransform();
+		FQuat q = tm.GetRotation();
+		UE_LOG(LogNadirUtil, Log, TEXT("rotation quaternion %s "), *q.ToString());
+
+		FVector vrot = q.Euler();
+		UE_LOG(LogNadirUtil, Log, TEXT("rotation euler %s "), *vrot.ToString());
+
+		FQuat qRecon = FQuat::MakeFromEuler(vrot);
+		UE_LOG(LogNadirUtil, Log, TEXT("quaternion from euler %s "), *qRecon.ToString());
+
+/// left hand 
+///   z                                   z
+///   |                                   |
+///    ---x  rotate 90 deg around z   y---   front is x
+///  /                                   /
+/// y                                   x
+///
+/// right hand
+///    y
+///    |
+///     ---x
+///   /
+///  z
+/// x rotate direction unchanged
+/// y and z rotate backwards
+/// mirror the quaternion
+///
+/// https://forum.unity.com/threads/right-hand-to-left-handed-conversions.80679/
+///		static function MayaRotationToUnity(rotation : Vector3) : Quaternion{
+///		   var flippedRotation : Vector3 = Vector3(rotation.x, -rotation.y, -rotation.z); // flip Y and Z axis for right->left handed conversion
+///		   // convert XYZ to ZYX
+///		   var qx : Quaternion = Quaternion.AngleAxis(flippedRotation.x, Vector3.right);
+///		   var qy : Quaternion = Quaternion.AngleAxis(flippedRotation.y, Vector3.up);
+///		   var qz : Quaternion = Quaternion.AngleAxis(flippedRotation.z, Vector3.forward);
+///		   var qq : Quaternion = qz * qy * qx; // this is the order
+///		   return qq;
+///		}
+/// https://www.gamedev.net/forums/topic/654682-quaternions-convert-between-left-right-handed-without-using-euler/
+///
+///
+///		static Quaternion ConvertToRightHand(Vector3 Euler)
+///		{
+///			Quaternion x = Quaternion.AngleAxis(-Euler.x, Vector3.right);
+///			Quaternion y = Quaternion.AngleAxis(-Euler.y + 180, Vector3.up);
+///			Quaternion z = Quaternion.AngleAxis(Euler.z, Vector3.forward);
+///			return (z * y * x);
+///		}
+
+		return FReply::Handled();
+	}
+
 ///	static TSharedPtr<SEditableTextBox> ActorNameField;
 	static TSharedPtr<SMultiLineEditableTextBox> MiscStatsField;
 	static TSharedPtr<SButton> SaveActBtn;
@@ -276,6 +347,12 @@ void FNadirEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitHost)
 				.AutoHeight()
 				[
 					saveActBtn
+				]
+			+ SVerticalBox::Slot()
+				.HAlign(HAlign_Center)
+				.AutoHeight()
+				[
+					Locals::MakeTestRotationButton(LOCTEXT("TestRotationButtonLabel", "Test Rotation"))
 				]
 		];
 		
