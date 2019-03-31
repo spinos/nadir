@@ -211,8 +211,26 @@ struct Locals
 		FVector vrot = q.Euler();
 		UE_LOG(LogNadirUtil, Log, TEXT("rotation euler %s "), *vrot.ToString());
 
-		FQuat qRecon = FQuat::MakeFromEuler(vrot);
-		UE_LOG(LogNadirUtil, Log, TEXT("quaternion from euler %s "), *qRecon.ToString());
+/// x and y is flipped
+		double rx = FMath::DegreesToRadians<double>(vrot.X) * -1.0;
+		double ry = FMath::DegreesToRadians<double>(vrot.Y) * -1.0;
+		double rz = FMath::DegreesToRadians<double>(vrot.Z);
+
+		FQuat qx(FVector::ForwardVector, (float)rx);
+		FQuat qy(FVector::RightVector, (float)ry);
+		FQuat qz(FVector::UpVector, (float)rz);
+
+		UE_LOG(LogNadirUtil, Log, TEXT("qx %s "), *qx.ToString());
+		UE_LOG(LogNadirUtil, Log, TEXT("qy %s "), *qy.ToString());
+		UE_LOG(LogNadirUtil, Log, TEXT("qz %s "), *qz.ToString());
+
+/// zyx order
+		FQuat qRecon = qz * qy * qx;
+		UE_LOG(LogNadirUtil, Warning, TEXT("quaternion from euler %s recon error %f"), *qRecon.ToString(),
+			FQuat::Error(qRecon, q));
+
+		FVector vrecon = qRecon.Euler();
+		UE_LOG(LogNadirUtil, Log, TEXT("recon euler %s"), *vrecon.ToString());
 
 /// left hand 
 ///   z                                   z
@@ -220,37 +238,18 @@ struct Locals
 ///    ---x  rotate 90 deg around z   y---   front is x
 ///  /                                   /
 /// y                                   x
-///
+/// x: roll y:pitch z:yaw
+/// yaw first rool last
 /// right hand
 ///    y
 ///    |
 ///     ---x
 ///   /
 ///  z
-/// x rotate direction unchanged
-/// y and z rotate backwards
+/// x unchanged
+/// swap y and z, y rotate backwards
 /// mirror the quaternion
-///
-/// https://forum.unity.com/threads/right-hand-to-left-handed-conversions.80679/
-///		static function MayaRotationToUnity(rotation : Vector3) : Quaternion{
-///		   var flippedRotation : Vector3 = Vector3(rotation.x, -rotation.y, -rotation.z); // flip Y and Z axis for right->left handed conversion
-///		   // convert XYZ to ZYX
-///		   var qx : Quaternion = Quaternion.AngleAxis(flippedRotation.x, Vector3.right);
-///		   var qy : Quaternion = Quaternion.AngleAxis(flippedRotation.y, Vector3.up);
-///		   var qz : Quaternion = Quaternion.AngleAxis(flippedRotation.z, Vector3.forward);
-///		   var qq : Quaternion = qz * qy * qx; // this is the order
-///		   return qq;
-///		}
-/// https://www.gamedev.net/forums/topic/654682-quaternions-convert-between-left-right-handed-without-using-euler/
-///
-///
-///		static Quaternion ConvertToRightHand(Vector3 Euler)
-///		{
-///			Quaternion x = Quaternion.AngleAxis(-Euler.x, Vector3.right);
-///			Quaternion y = Quaternion.AngleAxis(-Euler.y + 180, Vector3.up);
-///			Quaternion z = Quaternion.AngleAxis(Euler.z, Vector3.forward);
-///			return (z * y * x);
-///		}
+/// (roll, -yaw, pitch) 
 
 		return FReply::Handled();
 	}
