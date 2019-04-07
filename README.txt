@@ -9,6 +9,7 @@ Features:
 *Use boost via third party library
 *Use hdf5 via third party library
 *Create a static mesh
+*Custom actor with dynamically created components
 
 How to use Boost:
 *Have a lot errors when mixing boost and unreal headers. A workaround is to compile a dynamic library
@@ -28,3 +29,7 @@ Link static hdf5, zlib, szip, so everything will reside inside the third party l
 A Valid Mesh
 *Must have at least one UV set
 *Face connection is clockwise
+*Make its package dirty so it can be saved
+
+Dynamically Created Components
+*Cannot be saved

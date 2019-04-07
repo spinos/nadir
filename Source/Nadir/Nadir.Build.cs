@@ -54,7 +54,6 @@ public class Nadir : ModuleRules
                 "MovieSceneTracks",
                 "Sequencer",
                 "RenderCore",
-                "MeshDescription",
                 "RawMesh"
 				// ... add private dependencies that you statically link with here ...	
 			}

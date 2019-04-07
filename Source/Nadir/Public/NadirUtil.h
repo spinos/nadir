@@ -33,6 +33,10 @@ public:
 
 	static void GetActorTypeName(FString &typeName, const AActor *actor);
 
+	static UStaticMesh* CreateMinimalMesh();
+
+	static UWorld* GetEditorWorld();
+
 };
 
 DECLARE_LOG_CATEGORY_EXTERN(LogNadirUtil, Log, All);

@@ -313,3 +313,126 @@ void NadirUtil::GetActorTypeName(FString &typeName, const AActor *actor)
 		typeName = FString("camera");
 	}
 }
+
+UWorld* NadirUtil::GetEditorWorld()
+{
+	for (const FWorldContext& context : GEngine->GetWorldContexts())
+	{
+		if (context.WorldType == EWorldType::Editor)
+		{
+			return context.World();
+		}
+	}
+
+	return nullptr;
+}
+
+UStaticMesh* NadirUtil::CreateMinimalMesh()
+{
+	FRawMesh raw;
+	TArray < FVector > &vs = raw.VertexPositions;
+
+	vs.Add(FVector(0.f, 0.f, 3.f));
+	vs.Add(FVector(100.f, 0.f, 3.f));
+	vs.Add(FVector(100.f, 100.f, 3.f));
+	vs.Add(FVector(0.f, 100.f, 3.f));
+
+	TArray < uint32 > &inds = raw.WedgeIndices;
+	/// clockwise
+	inds.Add(0);
+	inds.Add(2);
+	inds.Add(1);
+
+	inds.Add(0);
+	inds.Add(3);
+	inds.Add(2);
+
+	FVector tx(1.0, 0.0, 0.0);
+	FVector ty(0.0, 1.0, 0.0);
+	FVector tz(0.0, 0.0, 1.0);
+
+	TArray < FVector > &wedgeTx = raw.WedgeTangentX;
+	TArray < FVector > &wedgeTy = raw.WedgeTangentY;
+	TArray < FVector > &wedgeTz = raw.WedgeTangentZ;
+
+	wedgeTx.Add(tx);
+	wedgeTy.Add(ty);
+	wedgeTz.Add(tz);
+
+	wedgeTx.Add(tx);
+	wedgeTy.Add(ty);
+	wedgeTz.Add(tz);
+
+	wedgeTx.Add(tx);
+	wedgeTy.Add(ty);
+	wedgeTz.Add(tz);
+
+	wedgeTx.Add(tx);
+	wedgeTy.Add(ty);
+	wedgeTz.Add(tz);
+
+	wedgeTx.Add(tx);
+	wedgeTy.Add(ty);
+	wedgeTz.Add(tz);
+
+	wedgeTx.Add(tx);
+	wedgeTy.Add(ty);
+	wedgeTz.Add(tz);
+
+	/// at least one uv set
+	TArray < FVector2D > &uv = raw.WedgeTexCoords[0];
+
+	uv.Add(FVector2D(0.f, 0.f));
+	uv.Add(FVector2D(1.f, 1.f));
+	uv.Add(FVector2D(1.f, 0.f));
+
+	uv.Add(FVector2D(0.f, 0.f));
+	uv.Add(FVector2D(0.f, 1.f));
+	uv.Add(FVector2D(1.f, 1.f));
+
+	TArray < int32 > &faceMat = raw.FaceMaterialIndices;
+	TArray < uint32 > &smoothMsk = raw.FaceSmoothingMasks;
+
+	faceMat.Add(0);
+	smoothMsk.Add(0);
+
+	faceMat.Add(0);
+	smoothMsk.Add(0);
+
+	UE_LOG(LogNadirUtil, Warning, TEXT("raw nv %i ni %i valid %i"), raw.VertexPositions.Num(), raw.WedgeIndices.Num(),
+		raw.IsValid());
+
+	/// Make sure rendering is done
+	FlushRenderingCommands();
+
+	FString packageName("/Game/Meshes/myPackage");
+
+	UPackage* package = CreatePackage(NULL, *packageName);
+	if (!package)
+		UE_LOG(LogNadirUtil, Warning, TEXT("create package error %s "), *packageName);
+
+	package->FullyLoad();
+
+	FString meshName("myMesh");
+
+	UStaticMesh* mesh = NewObject<UStaticMesh>(package, FName(*meshName), RF_Public | RF_Standalone);
+	if (!mesh)
+		UE_LOG(LogNadirUtil, Warning, TEXT("create mesh error %s "), *meshName);
+
+	mesh->InitResources();
+
+	FStaticMeshSourceModel& srcM = mesh->AddSourceModel();
+	srcM.SaveRawMesh(raw);
+
+	mesh->StaticMaterials.Add(FStaticMaterial());
+
+	mesh->Build(false);
+	mesh->PostEditChange();
+
+	/// Notify asset registry of new asset
+	FAssetRegistryModule::AssetCreated(mesh);
+	/// to be saved
+	package->MarkPackageDirty();
+
+	return mesh;
+}
