@@ -306,3 +306,10 @@ void NadirUtil::PrintTangent(const FMovieSceneTangentData & tangent)
 		tangentWeight
 	);
 }
+
+void NadirUtil::GetActorTypeName(FString &typeName, const AActor *actor)
+{
+	if (actor->IsA(ACameraActor::StaticClass())) {
+		typeName = FString("camera");
+	}
+}

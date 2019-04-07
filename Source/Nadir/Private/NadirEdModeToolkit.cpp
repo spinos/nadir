@@ -14,7 +14,13 @@
 #include "Camera/CameraActor.h"
 #include "ILevelSequenceModule.h"
 #include "DesktopPlatformModule.h"
+#include "MeshDescription.h"
+#include "MeshAttributes.h"
+#include "MeshAttributeArray.h"
 #include "EditorDirectories.h"
+#include "RawMesh.h"
+#include "AssetRegistryModule.h"
+
 #include "exampleLib/ExampleLibrary.h"
 #include "exampleLib/ExampleLibraryData.h"
 
@@ -63,6 +69,13 @@ struct Locals
 			.OnClicked_Static(&Locals::OnButtonTestRotationClick);
 	}
 
+	static TSharedRef<SButton> MakeCreateMeshButton(FText InLabel)
+	{
+		return SNew(SButton)
+			.Text(InLabel)
+			.OnClicked_Static(&Locals::OnButtonCreateMeshClick);
+	}
+
 	static void ClearStatsField()
 	{
 		TAttribute<FText> statsAttr;
@@ -89,6 +102,9 @@ struct Locals
 			ClearStatsField();
 			return FReply::Handled();
 		}
+
+		FString actorTypeName("unknown");
+		NadirUtil::GetActorTypeName(actorTypeName, selActor);
 					
 /// only works with possessables
 		UMovieScene3DTransformTrack *transTrack = NadirUtil::GetActorTransformTrack(levelSeq, selActorName);
@@ -121,8 +137,9 @@ struct Locals
 		
 		const TArray < UMovieSceneSection * > & trackSecs = transTrack->GetAllSections();
 		 
-        const FText statsStr = FText::Format(LOCTEXT("StatsText", "Actor: {0}\nLevel Sequence: {1}\nMovie Scene: playback [{2}:{3}] fps {4}\nTransform Track: #section {5}"), 
+        const FText statsStr = FText::Format(LOCTEXT("StatsText", "Actor: {0} type {1}\nLevel Sequence: {2}\nMovie Scene: playback [{3}:{4}] fps {5}\nTransform Track: #section {6}"), 
            FText::FromString(selActorName),
+			FText::FromString(actorTypeName),
            FText::FromString(levelSeq->GetFName().ToString()),
            frameBegin, frameEnd, fps.Numerator,
            trackSecs.Num() ) ;
@@ -224,7 +241,7 @@ struct Locals
 		UE_LOG(LogNadirUtil, Log, TEXT("qy %s "), *qy.ToString());
 		UE_LOG(LogNadirUtil, Log, TEXT("qz %s "), *qz.ToString());
 
-/// zyx order
+/// right to left
 		FQuat qRecon = qz * qy * qx;
 		UE_LOG(LogNadirUtil, Warning, TEXT("quaternion from euler %s recon error %f"), *qRecon.ToString(),
 			FQuat::Error(qRecon, q));
@@ -251,6 +268,114 @@ struct Locals
 /// mirror the quaternion
 /// (roll, -yaw, pitch) 
 
+		return FReply::Handled();
+	}
+
+	static FReply OnButtonCreateMeshClick()
+	{
+		FRawMesh raw;
+		TArray < FVector > &vs = raw.VertexPositions;
+
+		vs.Add(FVector(0.f, 0.f, 3.f));
+		vs.Add(FVector(100.f, 0.f, 3.f));
+		vs.Add(FVector(100.f, 100.f, 3.f));
+		vs.Add(FVector(0.f, 100.f, 3.f));
+
+		TArray < uint32 > &inds = raw.WedgeIndices;
+/// clockwise
+		inds.Add(0);
+		inds.Add(2);
+		inds.Add(1);
+
+		inds.Add(0);
+		inds.Add(3);
+		inds.Add(2);
+
+		FVector tx(1.0, 0.0, 0.0);
+		FVector ty(0.0, 1.0, 0.0);
+		FVector tz(0.0, 0.0, 1.0);
+
+		TArray < FVector > &wedgeTx = raw.WedgeTangentX;
+		TArray < FVector > &wedgeTy = raw.WedgeTangentY;
+		TArray < FVector > &wedgeTz = raw.WedgeTangentZ;
+
+		wedgeTx.Add(tx);
+		wedgeTy.Add(ty);
+		wedgeTz.Add(tz);
+
+		wedgeTx.Add(tx);
+		wedgeTy.Add(ty);
+		wedgeTz.Add(tz);
+
+		wedgeTx.Add(tx);
+		wedgeTy.Add(ty);
+		wedgeTz.Add(tz);
+
+		wedgeTx.Add(tx);
+		wedgeTy.Add(ty);
+		wedgeTz.Add(tz);
+
+		wedgeTx.Add(tx);
+		wedgeTy.Add(ty);
+		wedgeTz.Add(tz);
+
+		wedgeTx.Add(tx);
+		wedgeTy.Add(ty);
+		wedgeTz.Add(tz);
+
+/// at least one uv set
+		TArray < FVector2D > &uv = raw.WedgeTexCoords[0];
+			
+		uv.Add(FVector2D(0.f, 0.f));
+		uv.Add(FVector2D(1.f, 1.f));
+		uv.Add(FVector2D(1.f, 0.f));
+
+		uv.Add(FVector2D(0.f, 0.f));
+		uv.Add(FVector2D(0.f, 1.f));
+		uv.Add(FVector2D(1.f, 1.f));
+
+		TArray < int32 > &faceMat = raw.FaceMaterialIndices;
+		TArray < uint32 > &smoothMsk = raw.FaceSmoothingMasks;
+
+		faceMat.Add(0);
+		smoothMsk.Add(0);
+
+		faceMat.Add(0);
+		smoothMsk.Add(0);
+
+		UE_LOG(LogNadirUtil, Warning, TEXT("raw nv %i ni %i valid %i"), raw.VertexPositions.Num(), raw.WedgeIndices.Num(),
+			raw.IsValid());
+
+/// Make sure rendering is done
+		FlushRenderingCommands();
+
+		FString packageName("/Game/Meshes/myPackage");
+
+		UPackage* package = CreatePackage(NULL, *packageName);
+		if (!package)
+			UE_LOG(LogNadirUtil, Warning, TEXT("create package error %s "), *packageName);
+		
+		//package->FullyLoad();
+
+		FString meshName("myMesh");
+
+		UStaticMesh* mesh = NewObject<UStaticMesh>(package, FName(*meshName), RF_Public | RF_Standalone);
+		if (!mesh)
+			UE_LOG(LogNadirUtil, Warning, TEXT("create mesh error %s "), *meshName);
+
+		mesh->InitResources();
+
+		FStaticMeshSourceModel& srcM = mesh->AddSourceModel();
+		srcM.SaveRawMesh(raw);
+
+		mesh->StaticMaterials.Add(FStaticMaterial());
+
+		mesh->Build(false);
+		mesh->PostEditChange();
+
+/// Notify asset registry of new asset
+		FAssetRegistryModule::AssetCreated(mesh);
+		
 		return FReply::Handled();
 	}
 
@@ -352,6 +477,12 @@ void FNadirEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitHost)
 				.AutoHeight()
 				[
 					Locals::MakeTestRotationButton(LOCTEXT("TestRotationButtonLabel", "Test Rotation"))
+				]
+			+ SVerticalBox::Slot()
+				.HAlign(HAlign_Center)
+				.AutoHeight()
+				[
+					Locals::MakeCreateMeshButton(LOCTEXT("CreateMeshLabel", "Create Mesh"))
 				]
 		];
 		

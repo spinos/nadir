@@ -8,6 +8,7 @@ Features:
 *Open save file dialog
 *Use boost via third party library
 *Use hdf5 via third party library
+*Create a static mesh
 
 How to use Boost:
 *Have a lot errors when mixing boost and unreal headers. A workaround is to compile a dynamic library
@@ -23,3 +24,7 @@ How to use HDF5:
 In CMakeFilters.cmake, set to find zlib and szip static librarties only. Build zlib and szip static library only as well.
 Link static hdf5, zlib, szip, so everything will reside inside the third party library. Resulting dll will be a lot bigger.
 *Load third party dll only. No need to load hdf5, zlib, szip dlls any more.
+
+A Valid Mesh
+*Must have at least one UV set
+*Face connection is clockwise

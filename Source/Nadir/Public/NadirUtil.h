@@ -31,6 +31,8 @@ public:
 
 	static void PrintTangent(const FMovieSceneTangentData & tangent);
 
+	static void GetActorTypeName(FString &typeName, const AActor *actor);
+
 };
 
 DECLARE_LOG_CATEGORY_EXTERN(LogNadirUtil, Log, All);
