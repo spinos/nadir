@@ -300,11 +300,11 @@ struct Locals
 
 		UNadirSceneComponent* root = Cast<UNadirSceneComponent>(hier->GetRootComponent());
 
-		USceneComponent* child1 = NewObject<USceneComponent>(hier, "Child1");
+		UNadirSceneComponent* child1 = NewObject<UNadirSceneComponent>(hier, "Child1");
 
 		child1->AttachToComponent(root, FAttachmentTransformRules(EAttachmentRule::KeepRelative, false));
+		
 		child1->CreationMethod = EComponentCreationMethod::Instance;
-
 		child1->RegisterComponent();
 
 		UStaticMesh * mesh = NadirUtil::CreateMinimalMesh();
@@ -315,8 +315,6 @@ struct Locals
 
 		meshComp->CreationMethod = EComponentCreationMethod::Instance;
 		meshComp->RegisterComponent();
-
-		root->HierarchyStr = FString("content here");
 
 		hier->PostEditChange();
 

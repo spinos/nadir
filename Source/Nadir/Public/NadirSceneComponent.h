@@ -11,8 +11,8 @@ class NADIR_API UNadirSceneComponent : public USceneComponent
 
 public:
 
-	UPROPERTY(VisibleInstanceOnly)
-	FString HierarchyStr;
+/// readonly in editor
+///	UPROPERTY(VisibleAnywhere)
+///	FString HierarchyStr;
 
-	virtual void PostLoad() override;
 };

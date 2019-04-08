@@ -35,7 +35,7 @@ void FNadirModule::Register()
 	FString BaseDir = IPluginManager::Get().FindPlugin("Nadir")->GetBaseDir();
 
 	// Add on the relative location of the third party dll and load it
-	FString LibraryPath, hdf5LibPath, hdf5cppLibPath, zlibPath, szipPath;
+	FString LibraryPath;
 #if PLATFORM_WINDOWS
 	LibraryPath = FPaths::Combine(*BaseDir, TEXT("Source/ThirdParty/exampleLib/ExampleLib.dll"));
 #elif PLATFORM_MAC
@@ -49,14 +49,13 @@ void FNadirModule::Register()
 		// Call the test function in the third party library that opens a message box
 		//ExampleLibraryFunction();
 		_getExampleLibraryTestHdfFromDll = nullptr;
-		FString procName = "ExampleLibraryTestHdf";	// Needs to be the exact name of the DLL method.
+		const FString procName("ExampleLibraryTestHdf");	// Needs to be the exact name of the DLL method.
 		_getExampleLibraryTestHdfFromDll = (_exampleLibraryTestHdf)FPlatformProcess::GetDllExport(ExampleLibraryHandle, *procName);
 		if (_getExampleLibraryTestHdfFromDll != NULL)
 		{
-			FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("ThirdPartyLibraryInfo", "example library has function ExampleLibraryTestHdf "));
-			std::string hdfFileName("D:/bar.hes");
-			bool isHdfSaved = bool(_getExampleLibraryTestHdfFromDll(hdfFileName));
-		
+			//FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("ThirdPartyLibraryInfo", "example library has function ExampleLibraryTestHdf "));
+			//std::string hdfFileName("D:/bar.hes");
+			//bool isHdfSaved = bool(_getExampleLibraryTestHdfFromDll(hdfFileName));
 		}
 	}
 	else

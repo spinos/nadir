@@ -6,10 +6,3 @@ UNadirSceneComponent::UNadirSceneComponent(const FObjectInitializer& ObjectIniti
 	PrimaryComponentTick.bCanEverTick = true;
 	bAutoActivate = true;
 }
-
-void UNadirSceneComponent::PostLoad()
-{
-	Super::PostLoad();
-
-	UE_LOG(LogTemp, Warning, TEXT("UNadirSceneComponent post load str %s"), *HierarchyStr );
-}
