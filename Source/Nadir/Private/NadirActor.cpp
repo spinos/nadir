@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "NadirActor.h"
+#include "NadirSceneComponent.h"
 #include "UObject/ConstructorHelpers.h"
 
 // Sets default values
@@ -9,7 +10,7 @@ ANadirActor::ANadirActor(const class FObjectInitializer& ObjectInitializer) : Su
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	Root = CreateDefaultSubobject<USceneComponent>("Root");
+	Root = CreateDefaultSubobject<UNadirSceneComponent>("Root");
 	
 }
 

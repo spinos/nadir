@@ -21,6 +21,7 @@
 #include "RawMesh.h"
 #include "AssetRegistryModule.h"
 #include "NadirActor.h"
+#include "NadirSceneComponent.h"
 
 #include "exampleLib/ExampleLibrary.h"
 #include "exampleLib/ExampleLibraryData.h"
@@ -297,7 +298,7 @@ struct Locals
 		auto hier = world->SpawnActor<ANadirActor>();
 /// or? Cast<ANadirActor>(GEditor->AddActor(World->GetCurrentLevel(), ANadirActor::StaticClass(), initialTransform));
 
-		USceneComponent* root = hier->GetRootComponent();
+		UNadirSceneComponent* root = Cast<UNadirSceneComponent>(hier->GetRootComponent());
 
 		USceneComponent* child1 = NewObject<USceneComponent>(hier, "Child1");
 
@@ -314,6 +315,8 @@ struct Locals
 
 		meshComp->CreationMethod = EComponentCreationMethod::Instance;
 		meshComp->RegisterComponent();
+
+		root->HierarchyStr = FString("content here");
 
 		hier->PostEditChange();
 

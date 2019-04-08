@@ -5,6 +5,8 @@
 #include "GameFramework/Actor.h"
 #include "NadirActor.generated.h"
 
+class UNadirSceneComponent;
+
 UCLASS()
 class NADIR_API ANadirActor : public AActor
 {
@@ -13,7 +15,7 @@ class NADIR_API ANadirActor : public AActor
 public:	
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	USceneComponent* Root;
+	UNadirSceneComponent* Root;
 
 protected:
 	// Called when the game starts or when spawned

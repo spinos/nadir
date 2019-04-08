@@ -10,6 +10,7 @@ Features:
 *Use hdf5 via third party library
 *Create a static mesh
 *Custom actor with dynamically created components
+*Custom component with read-only property
 
 How to use Boost:
 *Have a lot errors when mixing boost and unreal headers. A workaround is to compile a dynamic library
