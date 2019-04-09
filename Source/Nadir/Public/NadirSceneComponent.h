@@ -11,8 +11,14 @@ class NADIR_API UNadirSceneComponent : public USceneComponent
 
 public:
 
+	void encodeHierarchy(TSharedRef<FJsonObject> currentObj);
+
 /// readonly in editor
 ///	UPROPERTY(VisibleAnywhere)
 ///	FString HierarchyStr;
+
+private:
+
+	void encodeMeshComponent(TSharedRef<FJsonObject> currentObj, UStaticMeshComponent *meshComp);
 
 };

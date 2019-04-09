@@ -436,3 +436,53 @@ UStaticMesh* NadirUtil::CreateMinimalMesh()
 
 	return mesh;
 }
+
+void NadirUtil::EncodeTranslate(TSharedRef<FJsonObject> obj, const FVector &t)
+{
+	if (t.IsZero()) return;
+
+	TSharedPtr < FJsonValueNumber > tx = MakeShared<FJsonValueNumber>(t.X);
+	TSharedPtr < FJsonValueNumber > ty = MakeShared<FJsonValueNumber>(t.Y);
+	TSharedPtr < FJsonValueNumber > tz = MakeShared<FJsonValueNumber>(t.Z);
+
+	TArray < TSharedPtr < FJsonValue > > tArr;
+	tArr.Add(tx);
+	tArr.Add(ty);
+	tArr.Add(tz);
+
+	obj->SetArrayField("t", tArr);
+}
+
+void NadirUtil::EncodeRotate(TSharedRef<FJsonObject> obj, const FQuat &q)
+{
+	if (q == FQuat::Identity) return;
+
+	TSharedPtr < FJsonValueNumber > qx = MakeShared<FJsonValueNumber>(q.X);
+	TSharedPtr < FJsonValueNumber > qy = MakeShared<FJsonValueNumber>(q.Y);
+	TSharedPtr < FJsonValueNumber > qz = MakeShared<FJsonValueNumber>(q.Z);
+	TSharedPtr < FJsonValueNumber > qw = MakeShared<FJsonValueNumber>(q.W);
+
+	TArray < TSharedPtr < FJsonValue > > qArr;
+	qArr.Add(qx);
+	qArr.Add(qy);
+	qArr.Add(qz);
+	qArr.Add(qw);
+
+	obj->SetArrayField("r", qArr);
+}
+
+void NadirUtil::EncodeScale(TSharedRef<FJsonObject> obj, const FVector &s)
+{
+	if (s == FVector::OneVector) return;
+
+	TSharedPtr < FJsonValueNumber > sx = MakeShared<FJsonValueNumber>(s.X);
+	TSharedPtr < FJsonValueNumber > sy = MakeShared<FJsonValueNumber>(s.Y);
+	TSharedPtr < FJsonValueNumber > sz = MakeShared<FJsonValueNumber>(s.Z);
+
+	TArray < TSharedPtr < FJsonValue > > sArr;
+	sArr.Add(sx);
+	sArr.Add(sy);
+	sArr.Add(sz);
+
+	obj->SetArrayField("s", sArr);
+}

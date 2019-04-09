@@ -38,25 +38,11 @@ void ANadirActor::PreSave(const class ITargetPlatform* TargetPlatform)
 	Super::PreSave(TargetPlatform);
 
 	TSharedRef<FJsonObject> jobj(new FJsonObject());
-	jobj->SetStringField("Name", "Super Sword");
-	jobj->SetNumberField("Damage", 15);
-	jobj->SetNumberField("Weight", 3);
+	//jobj->SetStringField("Name", "Super Sword");
+	//jobj->SetNumberField("Damage", 15);
+	//jobj->SetNumberField("Weight", 3);
 
-	TSharedRef<FJsonObject> child1 = MakeShared<FJsonObject>();
-	child1->SetStringField("Name", "Fire");
-	child1->SetNumberField("Damage", 25);
-	child1->SetNumberField("Weight", 1);
-
-	TSharedRef<FJsonObject> child2 = MakeShared<FJsonObject>();
-	child2->SetStringField("Name", "Water");
-	child2->SetNumberField("Damage", 22);
-	child2->SetNumberField("Weight", 2);
-
-	TArray < TSharedPtr < FJsonValue > > childArr;
-	childArr.Add(MakeShared<FJsonValueObject>(child1) );
-	childArr.Add(MakeShared<FJsonValueObject>(child2));
-
-	jobj->SetArrayField(TEXT("child"), childArr);
+	Root->encodeHierarchy(jobj);
 
 	TSharedRef< TJsonWriter<> > jwriter = TJsonWriterFactory<>::Create(&hierarchyData.content);
 	FJsonSerializer::Serialize(jobj, jwriter);

@@ -2,6 +2,8 @@
 
 #include "LevelSequence.h"
 #include "Tracks/MovieScene3DTransformTrack.h"
+#include "Dom/JsonValue.h"
+#include "Dom/JsonObject.h"
 
 class NadirUtil
 {
@@ -37,6 +39,11 @@ public:
 
 	static UWorld* GetEditorWorld();
 
+	static void EncodeTranslate(TSharedRef<FJsonObject> obj, const FVector &t);
+
+	static void EncodeRotate(TSharedRef<FJsonObject> obj, const FQuat &q);
+
+	static void EncodeScale(TSharedRef<FJsonObject> obj, const FVector &s);
 };
 
 DECLARE_LOG_CATEGORY_EXTERN(LogNadirUtil, Log, All);
