@@ -44,6 +44,21 @@ public:
 	static void EncodeRotate(TSharedRef<FJsonObject> obj, const FQuat &q);
 
 	static void EncodeScale(TSharedRef<FJsonObject> obj, const FVector &s);
+
+	static bool DecodeTranslate(FVector &vt, const TSharedPtr<FJsonObject> & obj);
+
+	static bool DecodeRotate(FQuat &qr, const TSharedPtr<FJsonObject> & obj);
+
+	static bool DecodeScale(FVector &vs, const TSharedPtr<FJsonObject> & obj);
+
+	static FVector ToVec3(const TArray<TSharedPtr<FJsonValue>> &valArr);
+
+	static FQuat ToQuat(const TArray<TSharedPtr<FJsonValue>> &valArr);
+
+	static void EncodeMeshComponent(TSharedRef<FJsonObject> currentObj, UStaticMeshComponent *meshComp);
+
+	static void DecodeMeshComponent(UStaticMeshComponent *meshComp, const TSharedPtr<FJsonObject> & obj);
+
 };
 
 DECLARE_LOG_CATEGORY_EXTERN(LogNadirUtil, Log, All);

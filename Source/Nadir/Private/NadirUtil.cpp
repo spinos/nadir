@@ -4,6 +4,7 @@
 #include "NadirUtil.h"
 #include "AssetRegistryModule.h"
 #include "Channels/MovieSceneChannelProxy.h"
+#include "UObject/ConstructorHelpers.h"
 
 DEFINE_LOG_CATEGORY(LogNadirUtil);
 
@@ -485,4 +486,84 @@ void NadirUtil::EncodeScale(TSharedRef<FJsonObject> obj, const FVector &s)
 	sArr.Add(sz);
 
 	obj->SetArrayField("s", sArr);
+}
+
+bool NadirUtil::DecodeTranslate(FVector &vt, const TSharedPtr<FJsonObject> &obj)
+{
+	const TArray<TSharedPtr<FJsonValue>>* valArr;
+	if (!obj->TryGetArrayField("t", valArr)) return false;
+
+	vt = ToVec3(*valArr);
+	return true;
+}
+
+bool NadirUtil::DecodeRotate(FQuat &qr, const TSharedPtr<FJsonObject> &obj)
+{
+	const TArray<TSharedPtr<FJsonValue>>* valArr;
+	if (!obj->TryGetArrayField("r", valArr)) return false;
+
+	qr = ToQuat(*valArr);
+	return true;
+}
+
+bool NadirUtil::DecodeScale(FVector &vs, const TSharedPtr<FJsonObject> &obj)
+{
+	const TArray<TSharedPtr<FJsonValue>>* valArr;
+	if (!obj->TryGetArrayField("s", valArr)) return false;
+
+	vs = ToVec3(*valArr);
+	return true;
+}
+
+FVector NadirUtil::ToVec3(const TArray<TSharedPtr<FJsonValue>> &valArr)
+{
+	return FVector(valArr[0]->AsNumber(), valArr[1]->AsNumber(), valArr[2]->AsNumber() );
+}
+
+FQuat NadirUtil::ToQuat(const TArray<TSharedPtr<FJsonValue>> &valArr)
+{
+	return FQuat(valArr[0]->AsNumber(), valArr[1]->AsNumber(), valArr[2]->AsNumber(), valArr[3]->AsNumber() );
+}
+
+void NadirUtil::EncodeMeshComponent(TSharedRef<FJsonObject> currentObj, UStaticMeshComponent *meshComp)
+{
+	currentObj->SetStringField("name", meshComp->GetName());
+	currentObj->SetBoolField("is_mesh", true);
+
+	UStaticMesh* mesh = meshComp->GetStaticMesh();
+
+	FString meshPath = mesh->GetPathName(nullptr);
+	currentObj->SetStringField("mesh_name", meshPath);
+
+	UMaterialInterface* material = meshComp->GetMaterial(0);
+	if (material) {
+		FString materialPath = material->GetPathName(nullptr);
+		currentObj->SetStringField("material_name", materialPath);
+	}
+}
+
+void NadirUtil::DecodeMeshComponent(UStaticMeshComponent *meshComp, const TSharedPtr<FJsonObject> & obj)
+{
+	FString meshName;
+	if (obj->TryGetStringField("mesh_name", meshName)) {
+		
+		UStaticMesh* mt2 = (UStaticMesh*)StaticLoadObject(UStaticMesh::StaticClass(), nullptr, *meshName);
+		if(mt2) meshComp->SetStaticMesh(mt2);
+
+		//FString realMeshName = FString::Printf(TEXT("StaticMesh'%s'"), *meshName);
+		//UE_LOG(LogNadirUtil, Warning, TEXT("to find mesh %s "), *realMeshName);
+/// crash at this point
+		//auto meshAsset = ConstructorHelpers::FObjectFinder<UStaticMesh>(*realMeshName);
+		//if (meshAsset.Object != nullptr)
+		//	meshComp->SetStaticMesh(meshAsset.Object);
+	}
+	
+	FString materialName;
+	if (obj->TryGetStringField("material_name", materialName)) {
+
+		UMaterialInterface *mt3 = (UMaterialInterface*)StaticLoadObject(UMaterialInterface::StaticClass(), nullptr, *materialName);
+		if (mt3) meshComp->SetMaterial(0, mt3);
+
+	}
+	
 }

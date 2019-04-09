@@ -19,6 +19,4 @@ public:
 
 private:
 
-	void encodeMeshComponent(TSharedRef<FJsonObject> currentObj, UStaticMeshComponent *meshComp);
-
 };

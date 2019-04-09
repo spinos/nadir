@@ -39,29 +39,11 @@ void UNadirSceneComponent::encodeHierarchy(TSharedRef<FJsonObject> currentObj)
 
 			TSharedRef<FJsonObject> childObj = MakeShared<FJsonObject>();
 			
-			encodeMeshComponent(childObj, msh);
+			NadirUtil::EncodeMeshComponent(childObj, msh);
 
 			childArr.Add(MakeShared<FJsonValueObject>(childObj));
 		}
 	}
-	}
 
 	currentObj->SetArrayField(TEXT("child"), childArr);
-}
-
-void UNadirSceneComponent::encodeMeshComponent(TSharedRef<FJsonObject> currentObj, UStaticMeshComponent *meshComp)
-{
-	currentObj->SetStringField("name", meshComp->GetName());
-	currentObj->SetBoolField("is_mesh", true);
-
-	UStaticMesh* mesh = meshComp->GetStaticMesh();
-
-	FString meshPath = mesh->GetPathName(nullptr);
-	currentObj->SetStringField("mesh_name", meshPath);
-
-	UMaterialInterface* material = meshComp->GetMaterial(0);
-	if (material) {
-		FString materialPath = material->GetPathName(nullptr);
-		currentObj->SetStringField("material_name", materialPath);
-	}
 }

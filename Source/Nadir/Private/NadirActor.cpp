@@ -2,11 +2,9 @@
 
 #include "NadirActor.h"
 #include "NadirSceneComponent.h"
-#include "UObject/ConstructorHelpers.h"
+#include "NadirUtil.h"
 #include "Policies/CondensedJsonPrintPolicy.h"
 #include "Serialization/JsonTypes.h"
-#include "Dom/JsonValue.h"
-#include "Dom/JsonObject.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 
@@ -38,10 +36,6 @@ void ANadirActor::PreSave(const class ITargetPlatform* TargetPlatform)
 	Super::PreSave(TargetPlatform);
 
 	TSharedRef<FJsonObject> jobj(new FJsonObject());
-	//jobj->SetStringField("Name", "Super Sword");
-	//jobj->SetNumberField("Damage", 15);
-	//jobj->SetNumberField("Weight", 3);
-
 	Root->encodeHierarchy(jobj);
 
 	TSharedRef< TJsonWriter<> > jwriter = TJsonWriterFactory<>::Create(&hierarchyData.content);
@@ -57,4 +51,82 @@ void ANadirActor::PostLoad()
 	Super::PostLoad();
 
 	UE_LOG(LogTemp, Warning, TEXT("ANadirActor post load %s"), *hierarchyData.content);
+
+	TSharedPtr<FJsonObject> jobj;
+	TSharedRef<TJsonReader<> > jreader = TJsonReaderFactory<>::Create(hierarchyData.content);
+	if (!FJsonSerializer::Deserialize(jreader, jobj)) return;
+	if (!jobj.IsValid()) return;
+
+	TArray<ComponentContentPair > nodes;
+	nodes.Add(ComponentContentPair(Root, jobj) );
+
+	while (nodes.Num() > 0) {
+
+		ComponentContentPair &head = nodes[0];
+
+		decodeHierarchy(head.Key, head.Value, nodes);
+
+		nodes.RemoveAt(0);
+	}
+}
+
+void ANadirActor::decodeHierarchy(USceneComponent *comp, const TSharedPtr<FJsonObject> &content, 
+								TArray<ComponentContentPair > &nodes)
+{
+	FTransform tm = FTransform::Identity;
+	bool tmChanged = false;
+
+	FVector vt, vs;
+	FQuat qr;
+
+	if (NadirUtil::DecodeTranslate(vt, content)) {
+		tm.SetLocation(vt);
+		tmChanged = true;
+	}
+
+	if (NadirUtil::DecodeRotate(qr, content)) {
+		tm.SetRotation(qr);
+		tmChanged = true;
+	}
+
+	if (NadirUtil::DecodeScale(vs, content)) {
+		tm.SetScale3D(vs);
+		tmChanged = true;
+	}
+
+	if(tmChanged) comp->SetRelativeTransform(tm);
+
+	const TArray<TSharedPtr<FJsonValue>>* childArr;
+	if (!content->TryGetArrayField("child", childArr)) return;
+	if (childArr->Num() < 1) return;
+
+	for (TSharedPtr<FJsonValue> aval : *childArr) {
+		const TSharedPtr < FJsonObject > & childObj = aval->AsObject();
+
+		const FString childName = childObj->GetStringField("name");
+
+		if (childObj->HasField("is_mesh")) {
+			UStaticMeshComponent *meshComp = NewObject<UStaticMeshComponent>(this, FName(*childName));
+			NadirUtil::DecodeMeshComponent(meshComp, childObj);
+			attachNodeAddQueue(meshComp, comp, childObj, nodes);
+
+/// somehow show the mesh
+			meshComp->SetMobility(EComponentMobility::Static);
+			
+		}
+		else {
+			UNadirSceneComponent *childComp = NewObject<UNadirSceneComponent>(this, FName(*childName));
+			attachNodeAddQueue(childComp, comp, childObj, nodes);
+		}
+
+	}
+}
+
+void ANadirActor::attachNodeAddQueue(USceneComponent *child, USceneComponent *parent, const TSharedPtr<FJsonObject> &content, 
+							TArray<ComponentContentPair > &nodes)
+{
+	child->AttachToComponent(parent, FAttachmentTransformRules(EAttachmentRule::KeepRelative, false));
+	child->CreationMethod = EComponentCreationMethod::Instance;
+	child->RegisterComponent();
+	nodes.Add(ComponentContentPair(child, content));
 }

@@ -9,8 +9,7 @@ Features:
 *Use boost via third party library
 *Use hdf5 via third party library
 *Create a static mesh
-*Custom actor with dynamically created components
-*Custom component with read-only property
+*Custom actor with dynamically created components can be stored and reconstructed
 
 How to use Boost:
 *Have a lot errors when mixing boost and unreal headers. A workaround is to compile a dynamic library
@@ -33,4 +32,5 @@ A Valid Mesh
 *Make its package dirty so it can be saved
 
 Dynamically Created Components
-*Cannot be saved
+*Cannot be saved, save the hierarchy of components in json as a property in PreSave()
+*Reconstruct the components in PostLoad()

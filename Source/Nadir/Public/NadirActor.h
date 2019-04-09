@@ -44,4 +44,14 @@ public:
 	virtual void PreSave(const class ITargetPlatform* TargetPlatform) override;
 	virtual void PostLoad() override;
 
+private:
+
+	typedef TPair<USceneComponent *, const TSharedPtr<FJsonObject> > ComponentContentPair;
+
+	void decodeHierarchy(USceneComponent *comp, const TSharedPtr<FJsonObject> &content,
+		TArray<ComponentContentPair > &nodes);
+
+	void attachNodeAddQueue(USceneComponent *child, USceneComponent *parent, const TSharedPtr<FJsonObject> &content,
+		TArray<ComponentContentPair > &nodes);
+
 };
