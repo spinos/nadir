@@ -1,5 +1,11 @@
-///
-/// https://answers.unrealengine.com/questions/813601/view.html
+/*
+ *  NadirUtil.cpp
+ *
+ *  https://answers.unrealengine.com/questions/813601/view.html
+ *  Plugins/MovieScene/LevelSequenceEditor/Source/LevelSequenceEditor/Private/LevelSequenceEditorToolkit.cpp
+ * 
+ *  2019/5/30
+ */
 
 #include "NadirUtil.h"
 #include "AssetRegistryModule.h"
@@ -104,6 +110,53 @@ UMovieScene3DTransformTrack *NadirUtil::GetActorTransformTrack(ULevelSequence* l
 
 	UE_LOG(LogNadirUtil, Error, TEXT("cannot find transform track for %s"), *actorName);
 	return nullptr;
+}
+
+/// https://answers.unrealengine.com/questions/536269/add-sequencer-tracks-from-code.html
+void NadirUtil::CreateActorTransformTrack(ULevelSequence* levelSeq, const FString &actorName)
+{
+	UE_LOG(LogNadirUtil, Log, TEXT("CreateActorTransformTrack %s "), *actorName );
+
+	UMovieScene *movScn = levelSeq->GetMovieScene();
+	const TArray < FMovieSceneBinding > &movBinds = movScn->GetBindings();
+	for (int i = 0; i < movBinds.Num(); i++) {
+		const FGuid& objId = movBinds[i].GetObjectGuid();
+
+		TArray < UObject *, TInlineAllocator < 1 > > boundObjs;
+		levelSeq->LocateBoundObjects(objId, nullptr, boundObjs);
+
+		if (boundObjs.Num() < 1) {
+			continue;
+		}
+
+		TWeakObjectPtr<UObject> firstBoundObjPtr = boundObjs[0];
+		UObject *firstBoundObj = firstBoundObjPtr.Get();
+		AActor *firstActor = Cast<AActor>(firstBoundObj);
+
+		if (!firstActor) {
+			continue;
+		}
+
+		if (firstActor->GetName() != actorName) {
+			continue;
+		}
+
+		static const FName s_transformTrackName(TEXT("Transform"));
+		UMovieScene3DTransformTrack *transformTrack = movScn->FindTrack<UMovieScene3DTransformTrack>(objId, s_transformTrackName);
+		if (!transformTrack) {
+			transformTrack = Cast<UMovieScene3DTransformTrack>(movScn->AddTrack(UMovieScene3DTransformTrack::StaticClass(), objId));
+		}
+
+		if (transformTrack->IsEmpty()) {
+			UE_LOG(LogNadirUtil, Warning, TEXT("add a section to empty transform track reload to view it"));
+			UMovieScene3DTransformSection *sec = Cast<UMovieScene3DTransformSection>(transformTrack->CreateNewSection());
+			transformTrack->AddSection(*sec);
+		}
+
+		UMovieScene3DTransformSection *firstSection = Cast<UMovieScene3DTransformSection>(transformTrack->GetAllSections()[0]);
+		KeyTransformTrackSection(firstSection);
+
+	}
 }
 
 void NadirUtil::CountLevelSequences()
@@ -566,4 +619,52 @@ void NadirUtil::DecodeMeshComponent(UStaticMeshComponent *meshComp, const TShare
 
 	}
 	
+}
+
+void NadirUtil::KeyTransformTrackSection(UMovieScene3DTransformSection *section)
+{
+	UE_LOG(LogNadirUtil, Log, TEXT("todo add animation to transform track section ") );
+	FMovieSceneChannelProxy &channelPrx = section->GetChannelProxy();
+	TArrayView < const FMovieSceneChannelMetaData > channelData = channelPrx.GetMetaData<FMovieSceneFloatChannel>();
+	TArrayView<FMovieSceneFloatChannel*> channels = channelPrx.GetChannels<FMovieSceneFloatChannel>();
+
+	FFrameNumber inFrame;
+	inFrame.Value = 1 * 800;
+	FFrameNumber outFrame;
+	outFrame.Value = 100 * 800;
+	float inValue = 0.f;
+	float outValue = 100.f; 
+
+	ERichCurveTangentMode inTangentMode = ERichCurveTangentMode::RCTM_Auto;
+	ERichCurveTangentMode outTangentMode = ERichCurveTangentMode::RCTM_Auto;
+
+	FMovieSceneTangentData inTangent;
+	inTangent.ArriveTangent = 0.f;
+	inTangent.LeaveTangent = 0.f;
+	inTangent.TangentWeightMode = RCTWM_WeightedNone;
+
+	FMovieSceneTangentData outTangent;
+	outTangent.ArriveTangent = 0.f;
+	outTangent.LeaveTangent = 0.f;
+	outTangent.TangentWeightMode = RCTWM_WeightedNone;
+	
+	for(const FMovieSceneChannelMetaData adata : channelData) {
+		FName channelName = adata.Name;
+		uint8 channelOrder = adata.SortOrder;
+
+		if(channelName.ToString() != FString("Location.X")
+			&& channelName.ToString() != FString("Location.Y")
+			&& channelName.ToString() != FString("Location.Z")) continue;
+
+		UE_LOG(LogNadirUtil, Log, TEXT(" channel %s order %i "), *channelName.ToString(), channelOrder );
+
+		FMovieSceneFloatChannel *achannel = channels[channelOrder];
+
+		achannel->AddCubicKey(inFrame, inValue, inTangentMode, inTangent);
+		achannel->AddCubicKey(outFrame, outValue, outTangentMode, outTangent);
+
+	}
+
+	TRange < FFrameNumber > sectionRange(inFrame, outFrame);
+	section->SetRange(sectionRange);
 }

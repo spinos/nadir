@@ -1,3 +1,9 @@
+/*
+ *  NadirUtil.h
+ * 
+ *  2019/5/30
+ */
+
 #pragma once
 
 #include "LevelSequence.h"
@@ -16,6 +22,8 @@ public:
 	static AActor *GetFirstSelectedActorName(FString &actorName);
 
 	static UMovieScene3DTransformTrack *GetActorTransformTrack(ULevelSequence* levelSeq, const FString &actorName);
+
+	static void CreateActorTransformTrack(ULevelSequence* levelSeq, const FString &actorName);
 
 	static void CheckPossessed(ULevelSequence* levelSeq);
 
@@ -58,6 +66,8 @@ public:
 	static void EncodeMeshComponent(TSharedRef<FJsonObject> currentObj, UStaticMeshComponent *meshComp);
 
 	static void DecodeMeshComponent(UStaticMeshComponent *meshComp, const TSharedPtr<FJsonObject> & obj);
+
+	static void KeyTransformTrackSection(UMovieScene3DTransformSection *section);
 
 };
 

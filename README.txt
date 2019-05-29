@@ -11,6 +11,7 @@ Features:
 *Create a static mesh
 *Custom actor with dynamically created components can be stored and reconstructed
 *Fake tab layout with check boxes and widget switcher
+*Add animation in sequencer
 
 How to use Boost:
 *Have a lot errors when mixing boost and unreal headers. A workaround is to compile a dynamic library
@@ -41,4 +42,3 @@ Tab Layout:
 *State of each check box is controlled by HandleRadioButtonCheckStateChanged
 *Switch widget when HandleRadioButtonIsChecked
 *Less complicated than using DockTab and TabManager
-
