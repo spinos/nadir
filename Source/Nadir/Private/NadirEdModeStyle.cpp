@@ -22,11 +22,33 @@ void FNadirEdModeStyle::Initialize()
 	}
 
 	static const FVector2D Icon40x40(40.0f, 40.0f);
-
+	
 	StyleSet = MakeShared<FSlateStyleSet>(GetStyleSetName());
 	StyleSet->SetCoreContentRoot(FPaths::EngineContentDir() / TEXT("Slate"));
 
 	StyleSet->Set("NadirEditor.Tab", new IMAGE_BRUSH("mode_40", Icon40x40));
+
+	const FCheckBoxStyle openTabStyle = FCheckBoxStyle()
+		.SetCheckBoxType(ESlateCheckBoxType::CheckBox)
+		.SetUncheckedImage(IMAGE_BRUSH("open_40", Icon40x40))
+		.SetUncheckedHoveredImage( IMAGE_BRUSH( "open_40", Icon40x40))
+		.SetUncheckedPressedImage( IMAGE_BRUSH( "open_on_40", Icon40x40))
+		.SetCheckedImage(IMAGE_BRUSH("open_on_40", Icon40x40))
+		.SetCheckedHoveredImage(IMAGE_BRUSH("open_on_40", Icon40x40))
+		.SetCheckedPressedImage(IMAGE_BRUSH("open_40", Icon40x40));
+
+	StyleSet->Set("NadirEditor.OpenTab", openTabStyle);
+
+	const FCheckBoxStyle writeTabStyle = FCheckBoxStyle()
+		.SetCheckBoxType(ESlateCheckBoxType::CheckBox)
+		.SetUncheckedImage(IMAGE_BRUSH("write_40", Icon40x40))
+		.SetUncheckedHoveredImage( IMAGE_BRUSH( "write_40", Icon40x40))
+		.SetUncheckedPressedImage( IMAGE_BRUSH( "write_on_40", Icon40x40))
+		.SetCheckedImage(IMAGE_BRUSH("write_on_40", Icon40x40))
+		.SetCheckedHoveredImage(IMAGE_BRUSH("write_on_40", Icon40x40))
+		.SetCheckedPressedImage(IMAGE_BRUSH("write_40", Icon40x40));
+	
+	StyleSet->Set("NadirEditor.WriteTab", writeTabStyle);
 
 	FSlateStyleRegistry::RegisterSlateStyle(*StyleSet.Get());
 }

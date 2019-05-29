@@ -10,6 +10,8 @@
 #include "Widgets/Text/STextBlock.h"
 #include "Widgets/Layout/SScrollBox.h"
 #include "Widgets/Input/SMultiLineEditableTextBox.h"
+#include "Widgets/Layout/SGridPanel.h"
+#include "Widgets/Layout/SWidgetSwitcher.h"
 #include "EditorModeManager.h"
 #include "Camera/CameraActor.h"
 #include "ILevelSequenceModule.h"
@@ -41,7 +43,6 @@ struct Locals
 	{
 		return SNew(SEditableTextBox)
 			.Text(LOCTEXT("ActorLabel", "Nothing selected"));
-
 	}
 	
 	static TSharedRef<SMultiLineEditableTextBox> MakeStatsField()
@@ -338,64 +339,115 @@ FNadirEdModeToolkit::FNadirEdModeToolkit()
 void FNadirEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitHost)
 {
 	///TSharedRef<SEditableTextBox> actorNameField = Locals::MakeField();
-	TSharedRef<SMultiLineEditableTextBox> miscStatsField = Locals::MakeStatsField();
-	TSharedRef<SButton> saveActBtn = Locals::MakeSaveButton(LOCTEXT("SaveButtonLabel", "Export Track"));
-	saveActBtn->SetVisibility(EVisibility::Hidden);
-	
-/// ref to ptr conversion
-	Locals::MiscStatsField = miscStatsField;
-	Locals::SaveActBtn = saveActBtn;
+	/// ref to ptr conversion
+	m_miscStatsField = Locals::MakeStatsField();
+	m_saveActBtn = Locals::MakeSaveButton(LOCTEXT("SaveButtonLabel", "Export Track"));
+	m_saveActBtn->SetVisibility(EVisibility::Hidden);
 
-	//SAssignNew(ToolkitWidget, SBorder)
-		//.HAlign(HAlign_Center)
-	SAssignNew(ToolkitWidget, SScrollBox )
-		+SScrollBox::Slot()
-		.Padding(25)
-		//.IsEnabled_Static(&Locals::IsWidgetEnabled)
+	Locals::MiscStatsField = m_miscStatsField;
+	Locals::SaveActBtn = m_saveActBtn;
+	m_selectedTab = TabRadioWrite;
+	SAssignNew(m_panelSelector, SWidgetSwitcher);
+	m_panelSelector->AddSlot()
 		[
+			makeWritePanel()
+		];
+	m_panelSelector->AddSlot()
+		[
+			makeReadPanel()
+		];
+
+	m_panelSelector->SetActiveWidgetIndex(0);
+
+	SAssignNew(ToolkitWidget, SBorder)
+ 		.HAlign(HAlign_Left)
+			[
 			SNew(SVerticalBox)
 			+ SVerticalBox::Slot()
 			.AutoHeight()
+			.HAlign(HAlign_Left)
+				[
+					makeRadioPanel()
+				]
+			+ SVerticalBox::Slot()
 			.HAlign(HAlign_Center)
-			.Padding(15)
+				[
+					m_panelSelector.ToSharedRef()
+				]
+			];
+		
+	FModeToolkit::Init(InitToolkitHost);
+}
+
+FName FNadirEdModeToolkit::GetToolkitFName() const
+{
+	return FName("NadirEdMode");
+}
+
+FText FNadirEdModeToolkit::GetBaseToolkitName() const
+{
+	return NSLOCTEXT("NadirEdModeToolkit", "DisplayName", "Nadir Tool");
+}
+
+class FEdMode* FNadirEdModeToolkit::GetEditorMode() const
+{
+	return GLevelEditorModeTools().GetActiveMode(FNadirEdMode::EM_NadirEdModeId);
+}
+
+TSharedRef<SGridPanel> FNadirEdModeToolkit::makeRadioPanel()
+{
+	return SNew(SGridPanel)
+		+ SGridPanel::Slot(0, 0)
+		//.FillColumn(0, 0.5f)
+		//.HAlign(HAlign_Left)
+		.Padding(0.0f, 2.0f)
 			[
-				SNew(STextBlock)
-				.AutoWrapText(true)
-				.Text(LOCTEXT("HelperLabel", "Select some actor and show statistics below"))
+				SNew(SCheckBox)
+				.Style(FNadirEdModeStyle::Get(), TEXT("NadirEditor.WriteTab"))
+				.IsChecked(this, &FNadirEdModeToolkit::handleTabRadioIsChecked, TabRadioWrite)
+				.OnCheckStateChanged(this, &FNadirEdModeToolkit::handleTabRadioCheckStateChanged, TabRadioWrite)	
 			]
-			/*
+
+		+ SGridPanel::Slot(1, 0)
+			.Padding(0.0f, 2.0f)
+			[
+				SNew(SCheckBox)
+				.Style(FNadirEdModeStyle::Get(), TEXT("NadirEditor.OpenTab"))
+				.IsChecked(this, &FNadirEdModeToolkit::handleTabRadioIsChecked, TabRadioOpen)
+				.OnCheckStateChanged(this, &FNadirEdModeToolkit::handleTabRadioCheckStateChanged, TabRadioOpen)
+			];
+}
+
+ECheckBoxState FNadirEdModeToolkit::handleTabRadioIsChecked( TabRadioChoice ButtonId ) const
+{
+	return (m_selectedTab == ButtonId) ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
+}
+
+void FNadirEdModeToolkit::handleTabRadioCheckStateChanged( ECheckBoxState NewRadioState, TabRadioChoice RadioThatChanged )
+{
+	if (NewRadioState == ECheckBoxState::Checked)
+	{
+		m_selectedTab = RadioThatChanged;
+	}
+	m_panelSelector->SetActiveWidgetIndex(m_selectedTab);
+}
+
+TSharedRef<SScrollBox> FNadirEdModeToolkit::makeWritePanel()
+{
+	return SNew(SScrollBox )
+			+SScrollBox::Slot()
+ 		.HAlign(HAlign_Left)
+		[
+			SNew(SVerticalBox)
 			+ SVerticalBox::Slot()
-				.HAlign(HAlign_Center)
-				.AutoHeight()
-				[
-					Locals::MakeButton(LOCTEXT("UpButtonLabel", "Up"), FVector(0, 0, Factor))
-				]
-			+ SVerticalBox::Slot()
-				.HAlign(HAlign_Center)
-				.AutoHeight()
-				[
-					Locals::MakeButton(LOCTEXT("DownButtonLabel", "Down"), FVector(0, 0, -Factor))
-				]
-				
-			+ SVerticalBox::Slot()
-				.HAlign(HAlign_Left)
-				.AutoHeight()
-				[
-					SNew(SHorizontalBox)
-					+ SHorizontalBox::Slot()
-				.AutoWidth()
-				.Padding(5)
+			.HAlign(HAlign_Center)
+			.AutoHeight()
 				[
 					SNew(STextBlock)
-						.Text(LOCTEXT("ActorFieldLabel", "Actor"))
+					.AutoWrapText(false)
+					.WrapTextAt(270.0f)
+					.Text(LOCTEXT("WriteHelperLabel", "Select some actor and show statistics below"))
 				]
-				+ SHorizontalBox::Slot()
-					.AutoWidth()
-					[
-						actorNameField
-					]	
-				]
-				*/
 			+ SVerticalBox::Slot()
 				.HAlign(HAlign_Center)
 				.AutoHeight()
@@ -406,13 +458,32 @@ void FNadirEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitHost)
 				.HAlign(HAlign_Left)
 				.AutoHeight()
 				[
-					miscStatsField
+					m_miscStatsField.ToSharedRef()
 				]
 			+ SVerticalBox::Slot()
 				.HAlign(HAlign_Center)
 				.AutoHeight()
 				[
-					saveActBtn
+					m_saveActBtn.ToSharedRef()
+				]
+		];
+}
+
+TSharedRef<SScrollBox> FNadirEdModeToolkit::makeReadPanel()
+{
+	return SNew(SScrollBox )
+			+SScrollBox::Slot()
+ 		.HAlign(HAlign_Left)
+		[
+			SNew(SVerticalBox)
+			+ SVerticalBox::Slot()
+			.HAlign(HAlign_Center)
+			.AutoHeight()
+				[
+					SNew(STextBlock)
+					.AutoWrapText(false)
+					.WrapTextAt(270.0f)
+					.Text(LOCTEXT("ReadHelperLabel", "Some test funcs of panel 2"))
 				]
 			+ SVerticalBox::Slot()
 				.HAlign(HAlign_Center)
@@ -433,23 +504,6 @@ void FNadirEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitHost)
 					Locals::MakeCreateActorButton(LOCTEXT("CreateActorLabel", "Create Actor"))
 				]
 		];
-		
-	FModeToolkit::Init(InitToolkitHost);
-}
-
-FName FNadirEdModeToolkit::GetToolkitFName() const
-{
-	return FName("NadirEdMode");
-}
-
-FText FNadirEdModeToolkit::GetBaseToolkitName() const
-{
-	return NSLOCTEXT("NadirEdModeToolkit", "DisplayName", "Nadir Tool");
-}
-
-class FEdMode* FNadirEdModeToolkit::GetEditorMode() const
-{
-	return GLevelEditorModeTools().GetActiveMode(FNadirEdMode::EM_NadirEdModeId);
 }
 
 #undef LOCTEXT_NAMESPACE

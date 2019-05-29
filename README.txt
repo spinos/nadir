@@ -10,6 +10,7 @@ Features:
 *Use hdf5 via third party library
 *Create a static mesh
 *Custom actor with dynamically created components can be stored and reconstructed
+*Fake tab layout with check boxes and widget switcher
 
 How to use Boost:
 *Have a lot errors when mixing boost and unreal headers. A workaround is to compile a dynamic library
@@ -26,11 +27,17 @@ In CMakeFilters.cmake, set to find zlib and szip static librarties only. Build z
 Link static hdf5, zlib, szip, so everything will reside inside the third party library. Resulting dll will be a lot bigger.
 *Load third party dll only. No need to load hdf5, zlib, szip dlls any more.
 
-A Valid Mesh
+A Valid Mesh:
 *Must have at least one UV set
 *Face connection is clockwise
 *Make its package dirty so it can be saved
 
-Dynamically Created Components
+Dynamically Created Components:
 *Cannot be saved, save the hierarchy of components in json as a property in PreSave()
 *Reconstruct the components in PostLoad()
+
+Tab Layout:
+*Based Runtime/AppFramework/Private/Framework/Testing/SWidgetGallery.cpp
+*State of each check box is controlled by HandleRadioButtonCheckStateChanged
+*Switch widget when HandleRadioButtonIsChecked
+*Less complicated than using DickTab and TabManager
