@@ -40,4 +40,5 @@ Tab Layout:
 *Based Runtime/AppFramework/Private/Framework/Testing/SWidgetGallery.cpp
 *State of each check box is controlled by HandleRadioButtonCheckStateChanged
 *Switch widget when HandleRadioButtonIsChecked
-*Less complicated than using DickTab and TabManager
+*Less complicated than using DockTab and TabManager
+
