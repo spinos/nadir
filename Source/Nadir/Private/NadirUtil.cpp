@@ -660,6 +660,11 @@ void NadirUtil::KeyTransformTrackSection(UMovieScene3DTransformSection *section)
 
 		FMovieSceneFloatChannel *achannel = channels[channelOrder];
 
+		if(achannel->GetNumKeys() > 0) {
+/// remove all existing keys
+			achannel->Reset();
+		}
+
 		achannel->AddCubicKey(inFrame, inValue, inTangentMode, inTangent);
 		achannel->AddCubicKey(outFrame, outValue, outTangentMode, outTangent);
 

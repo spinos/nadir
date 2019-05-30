@@ -60,6 +60,7 @@ TSharedRef<SGridPanel> NadirEdModeWidget::makeRadioPanel()
 	m_selectedTab = TabRadioWrite;
 
 	return SNew(SGridPanel)
+	
 		+ SGridPanel::Slot(0, 0)
 		//.FillColumn(0, 0.5f)
 		//.HAlign(HAlign_Left)
@@ -117,7 +118,7 @@ TSharedRef<SScrollBox> NadirEdModeWidget::makeWritePanel()
 			.Text(LOCTEXT("MiscStats", "unknown stats"));
 
 	m_saveActBtn = SNew(SButton)
-			.Text(LOCTEXT("SaveButtonLabel", "Export Track"))
+			.ButtonStyle(FNadirEdModeStyle::Get(), TEXT("NadirEditor.SaveFileButton"))
 			.OnClicked(this, &NadirEdModeWidget::OnButtonSaveClick);
 
 	m_saveActBtn->SetVisibility(EVisibility::Hidden);
@@ -133,7 +134,7 @@ TSharedRef<SScrollBox> NadirEdModeWidget::makeWritePanel()
 				[
 					SNew(STextBlock)
 					.AutoWrapText(false)
-					.WrapTextAt(270.0f)
+					.WrapTextAt(240.0f)
 					.Text(LOCTEXT("WriteHelperLabel", "Select some actor and show statistics below"))
 				]
 			+ SVerticalBox::Slot()
@@ -151,14 +152,28 @@ TSharedRef<SScrollBox> NadirEdModeWidget::makeWritePanel()
 					m_miscStatsField.ToSharedRef()
 				]
 			+ SVerticalBox::Slot()
-				.HAlign(HAlign_Center)
-				.AutoHeight()
+				.HAlign(HAlign_Left)
+				//.AutoHeight()
 				[
-					m_saveActBtn.ToSharedRef()
+                    SNew(SHorizontalBox)
+                    +SHorizontalBox::Slot()
+                    .HAlign(HAlign_Left)
+                    [
+                        m_saveActBtn.ToSharedRef()
+                    ]
+					+SHorizontalBox::Slot()
+                    .HAlign(HAlign_Left)
+                    .VAlign(VAlign_Center)
+                    .AutoWidth()
+                    [
+                        SNew(STextBlock)
+                        .Text(LOCTEXT("SaveButtonLabel", "Export Track"))
+                    ]
 				]
 		];
 }
 
+/// https://answers.unrealengine.com/questions/605766/416-slate-ftextbox-bug.html
 TSharedRef<SScrollBox> NadirEdModeWidget::makeReadPanel()
 {
 	return SNew(SScrollBox )
@@ -172,16 +187,29 @@ TSharedRef<SScrollBox> NadirEdModeWidget::makeReadPanel()
 				[
 					SNew(STextBlock)
 					.AutoWrapText(false)
-					.WrapTextAt(270.0f)
+					.WrapTextAt(240.0f)
 					.Text(LOCTEXT("ReadHelperLabel", "Some test funcs of panel 2"))
 				]
 			+ SVerticalBox::Slot()
 				.HAlign(HAlign_Left)
-				.AutoHeight()
+				//.AutoHeight()
 				[
-					SNew(SButton)
-					.Text(LOCTEXT("TestAnimationButtonLabel", "Test Animation"))
-					.OnClicked(this, &NadirEdModeWidget::OnButtonTestAnimationClick)
+                    SNew(SHorizontalBox)
+                    +SHorizontalBox::Slot()
+                    .HAlign(HAlign_Left)
+                    [
+                        SNew(SButton)
+                        .ButtonStyle(FNadirEdModeStyle::Get(), TEXT("NadirEditor.OpenFileButton"))
+                        .OnClicked(this, &NadirEdModeWidget::OnButtonTestAnimationClick)
+                    ]
+					+SHorizontalBox::Slot()
+                    .HAlign(HAlign_Left)
+                    .VAlign(VAlign_Center)
+                    .AutoWidth()
+                    [
+                        SNew(STextBlock)
+                        .Text(LOCTEXT("TestAnimationButtonLabel", "Test Animation"))
+                    ]
 				]
 			+ SVerticalBox::Slot()
 				.HAlign(HAlign_Center)

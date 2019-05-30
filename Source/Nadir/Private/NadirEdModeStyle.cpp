@@ -49,6 +49,24 @@ void FNadirEdModeStyle::Initialize()
 		.SetCheckedPressedImage(IMAGE_BRUSH("write_40", Icon40x40));
 	
 	StyleSet->Set("NadirEditor.WriteTab", writeTabStyle);
+    
+    const FButtonStyle saveFileButtonStyle = FButtonStyle()
+					.SetNormal( IMAGE_BRUSH("save_file_40", Icon40x40) )
+					.SetHovered( IMAGE_BRUSH("save_file_40", Icon40x40) )
+					.SetPressed( IMAGE_BRUSH("save_file_down_40", Icon40x40) )
+					.SetNormalPadding( FMargin( 2,2,2,2 ) )
+					.SetPressedPadding( FMargin( 2,3,2,1 ) );
+                    
+	StyleSet->Set( "NadirEditor.SaveFileButton", saveFileButtonStyle );
+                
+    const FButtonStyle openFileButtonStyle = FButtonStyle()
+					.SetNormal( IMAGE_BRUSH("open_file_40", Icon40x40) )
+					.SetHovered( IMAGE_BRUSH("open_file_40", Icon40x40) )
+					.SetPressed( IMAGE_BRUSH("open_file_down_40", Icon40x40) )
+					.SetNormalPadding( FMargin( 2,2,2,2 ) )
+					.SetPressedPadding( FMargin( 2,3,2,1 ) );
+                    
+	StyleSet->Set( "NadirEditor.OpenFileButton", openFileButtonStyle );
 
 	FSlateStyleRegistry::RegisterSlateStyle(*StyleSet.Get());
 }
