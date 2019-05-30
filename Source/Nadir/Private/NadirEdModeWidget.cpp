@@ -1,6 +1,9 @@
 /*
  *  NadirEdModeWidget.cpp
  *
+ *  https://answers.unrealengine.com/questions/605766/416-slate-ftextbox-bug.html
+ *  https://wiki.unrealengine.com/Slate,_How_to_Make_Fancy_Custom_SButtons
+ *
  *  2019/5/30
  */
 
@@ -118,8 +121,31 @@ TSharedRef<SScrollBox> NadirEdModeWidget::makeWritePanel()
 			.Text(LOCTEXT("MiscStats", "unknown stats"));
 
 	m_saveActBtn = SNew(SButton)
-			.ButtonStyle(FNadirEdModeStyle::Get(), TEXT("NadirEditor.SaveFileButton"))
-			.OnClicked(this, &NadirEdModeWidget::OnButtonSaveClick);
+			//.ButtonStyle(FNadirEdModeStyle::Get(), TEXT("NadirEditor.SaveFileButton"))
+			.OnClicked(this, &NadirEdModeWidget::OnButtonSaveClick)
+			[
+				SNew(SBorder)
+				.Padding(0)
+	  			//.Padding(FMargin(3))
+	  			[
+	  				SNew(SHorizontalBox)
+                    +SHorizontalBox::Slot()
+                    .HAlign(HAlign_Left)
+                    [
+                        TSharedRef<SWidget>(SNew( SImage ) 
+                    	.Image(FNadirEdModeStyle::Get()->GetBrush("NadirEditor.SaveFile")))
+                    ]
+					+SHorizontalBox::Slot()
+                    .HAlign(HAlign_Left)
+                    .VAlign(VAlign_Center)
+                    .Padding(2)
+                    .AutoWidth()
+                    [
+                        SNew(STextBlock)
+                        .Text(LOCTEXT("SaveButtonLabel", "Export Track"))
+                    ]
+	  			]
+			];
 
 	m_saveActBtn->SetVisibility(EVisibility::Hidden);
 
@@ -155,25 +181,11 @@ TSharedRef<SScrollBox> NadirEdModeWidget::makeWritePanel()
 				.HAlign(HAlign_Left)
 				//.AutoHeight()
 				[
-                    SNew(SHorizontalBox)
-                    +SHorizontalBox::Slot()
-                    .HAlign(HAlign_Left)
-                    [
-                        m_saveActBtn.ToSharedRef()
-                    ]
-					+SHorizontalBox::Slot()
-                    .HAlign(HAlign_Left)
-                    .VAlign(VAlign_Center)
-                    .AutoWidth()
-                    [
-                        SNew(STextBlock)
-                        .Text(LOCTEXT("SaveButtonLabel", "Export Track"))
-                    ]
+					m_saveActBtn.ToSharedRef()
 				]
 		];
 }
 
-/// https://answers.unrealengine.com/questions/605766/416-slate-ftextbox-bug.html
 TSharedRef<SScrollBox> NadirEdModeWidget::makeReadPanel()
 {
 	return SNew(SScrollBox )
@@ -199,16 +211,29 @@ TSharedRef<SScrollBox> NadirEdModeWidget::makeReadPanel()
                     .HAlign(HAlign_Left)
                     [
                         SNew(SButton)
-                        .ButtonStyle(FNadirEdModeStyle::Get(), TEXT("NadirEditor.OpenFileButton"))
                         .OnClicked(this, &NadirEdModeWidget::OnButtonTestAnimationClick)
-                    ]
-					+SHorizontalBox::Slot()
-                    .HAlign(HAlign_Left)
-                    .VAlign(VAlign_Center)
-                    .AutoWidth()
-                    [
-                        SNew(STextBlock)
-                        .Text(LOCTEXT("TestAnimationButtonLabel", "Test Animation"))
+                        [
+                        	SNew(SBorder)
+							.Padding(0)
+                        	[
+                        		SNew(SHorizontalBox)
+			                    +SHorizontalBox::Slot()
+			                    .HAlign(HAlign_Left)
+			                    [
+			                        TSharedRef<SWidget>(SNew( SImage ) 
+			                    	.Image(FNadirEdModeStyle::Get()->GetBrush("NadirEditor.OpenFile")))
+			                    ]
+								+SHorizontalBox::Slot()
+			                    .HAlign(HAlign_Left)
+			                    .VAlign(VAlign_Center)
+			                    .Padding(2)
+			                    .AutoWidth()
+			                    [
+			                        SNew(STextBlock)
+			                        .Text(LOCTEXT("TestAnimationButtonLabel", "Test Animation"))
+			                    ]
+                        	]
+                        ]
                     ]
 				]
 			+ SVerticalBox::Slot()

@@ -27,6 +27,8 @@ void FNadirEdModeStyle::Initialize()
 	StyleSet->SetCoreContentRoot(FPaths::EngineContentDir() / TEXT("Slate"));
 
 	StyleSet->Set("NadirEditor.Tab", new IMAGE_BRUSH("mode_40", Icon40x40));
+	StyleSet->Set("NadirEditor.SaveFile", new IMAGE_BRUSH("save_file_40", Icon40x40));
+	StyleSet->Set("NadirEditor.OpenFile", new IMAGE_BRUSH("open_file_40", Icon40x40));
 
 	const FCheckBoxStyle openTabStyle = FCheckBoxStyle()
 		.SetCheckBoxType(ESlateCheckBoxType::CheckBox)

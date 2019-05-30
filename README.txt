@@ -12,6 +12,7 @@ Features:
 *Custom actor with dynamically created components can be stored and reconstructed
 *Fake tab layout with check boxes and widget switcher
 *Add animation in sequencer
+*Icon label button with border and horizontal box
 
 How to use Boost:
 *Have a lot errors when mixing boost and unreal headers. A workaround is to compile a dynamic library
