@@ -12,6 +12,7 @@ public class Nadir : ModuleRules
 			new string[] {
 				// ... add public include paths required here ...
                 //"Developer/DesktopPlatform/Public",
+                "Runtime/LevelSequence/Public",
             }
 			);
 				

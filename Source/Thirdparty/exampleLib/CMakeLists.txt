@@ -12,13 +12,13 @@ include_directories (${BOOST_ROOT})
 
 IF (EXISTS "D:/usr/hdf5-1.8.21-s")
 SET (HDF5_ROOT D:/usr/hdf5-1.8.21-s)
+ELSEIF (EXISTS "D:/usr/hdf5-1.8.20-s-vs141")
+SET (HDF5_ROOT D:/usr/hdf5-1.8.20-s-vs141)
 ELSE ()
 SET (HDF5_ROOT D:/usr/hdf5-1.8.20-s)
 ENDIF()
 
 include_directories (${HDF5_ROOT}/include)
-
-#ADD_DEFINITIONS (-DH5_BUILT_AS_DYNAMIC_LIB)
 
 file(GLOB SOURCES *.h *.cpp)
 
@@ -32,8 +32,8 @@ target_link_libraries (${PROJECT_NAME} ${BOOST_ROOT}/stage/lib/libboost_filesyst
 target_link_libraries (${PROJECT_NAME} ${BOOST_ROOT}/stage/lib/libboost_system-vc140-mt-x64-1_68.lib)
 ENDIF()
 target_link_libraries (${PROJECT_NAME} ${HDF5_ROOT}/lib/libhdf5.lib)
-target_link_libraries (${PROJECT_NAME} D:/usr/lib/libszip.lib)
-target_link_libraries (${PROJECT_NAME} D:/usr/lib/libzlib.lib)
+target_link_libraries (${PROJECT_NAME} ${HDF5_ROOT}/lib/libszip.lib)
+target_link_libraries (${PROJECT_NAME} ${HDF5_ROOT}/lib/libzlib.lib)
 
 set_target_properties( ${PROJECT_NAME} PROPERTIES CXX_STANDARD 11 )
 

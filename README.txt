@@ -43,3 +43,6 @@ Tab Layout:
 *State of each check box is controlled by HandleRadioButtonCheckStateChanged
 *Switch widget when HandleRadioButtonIsChecked
 *Less complicated than using DockTab and TabManager
+
+String Format:
+https://subscription.packtpub.com/book/game_development/9781785885549/1/ch01lvl1sec21/ue4-making-an-fstring-from-fstrings-and-other-variables
